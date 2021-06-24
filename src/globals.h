@@ -26,7 +26,7 @@ extern ux_state_t ux;
 extern unsigned int ux_step;
 extern unsigned int ux_step_count;
 
-#define MAX_CONTRACT_CELLS_COUNT 16
+#define MAX_CONTRACT_CELLS_COUNT 6
 #define MAX_MESSAGE_CELLS_COUNT 2
 #define HASHES_BUFFER_SIZE (MAX_CONTRACT_CELLS_COUNT * HASH_SIZE)
 #define MAX_PUBLIC_KEY_CELL_DATA_SIZE 36 // label(3) + public key(32) + tag(1)
@@ -67,6 +67,7 @@ typedef struct SignTransactionContext_t {
     char address_str[70];
     char amount_str[40];
     uint32_t account_number;
+    uint32_t contract_number;
 } SignTransactionContext_t;
 
 typedef union {
@@ -76,7 +77,18 @@ typedef union {
     SignTransactionContext_t sign_tr_context;
 } DataContext_t;
 
+typedef struct ContractContext_t {
+    uint8_t const* code_hash;
+    uint8_t const* wallet;
+    uint8_t wallet_size;
+    uint8_t wallet_cells_count;
+    uint8_t wallet_code_child_depth;
+    uint8_t wallet_data_child_depth;
+} ContractContext_t;
+
 extern BocContext_t boc_context;
 extern DataContext_t data_context;
+
+extern ContractContext_t contract_context;
 
 #endif

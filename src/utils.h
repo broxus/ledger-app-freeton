@@ -11,6 +11,7 @@
 unsigned int ui_prepro(const bagl_element_t *element);
 void get_public_key(uint32_t accountNumber, uint8_t* publicKeyArray);
 uint32_t readUint32BE(uint8_t *buffer);
+uint32_t readNextUint32BE(uint8_t *buffer);
 void get_private_key(uint32_t accountNumber, cx_ecfp_private_key_t *privateKey);
 void send_response(uint8_t tx, bool approve);
 uint8_t leading_zeros(uint16_t value);

@@ -53,10 +53,12 @@ UX_FLOW(ux_display_address_flow,
 );
 
 void handleGetAddress(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
-    VALIDATE(p2 == 0 && dataLength == sizeof(uint32_t), ERR_INVALID_REQUEST);
+    VALIDATE(p2 == 0 && dataLength == 2 * sizeof(uint32_t), ERR_INVALID_REQUEST);
 
     const uint32_t account_number = readUint32BE(dataBuffer);
-    get_address(account_number, data_context.addr_context.address);
+    const uint32_t contract_number = readNextUint32BE(dataBuffer);
+
+    get_address(account_number, contract_number, data_context.addr_context.address);
 
     if (p1 == P1_NON_CONFIRM) {
         *tx = set_result_get_address();

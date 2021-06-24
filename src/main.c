@@ -24,6 +24,8 @@ unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 BocContext_t boc_context;
 DataContext_t data_context;
 
+ContractContext_t contract_context;
+
 void reset_app_context() {
     os_memset(&boc_context, 0, sizeof(boc_context));
     os_memset(&data_context, 0, sizeof(data_context));

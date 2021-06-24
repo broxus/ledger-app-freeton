@@ -75,16 +75,17 @@ UX_FLOW(ux_sign_transaction_flow,
 );
 
 void handleSignTransaction(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
-    VALIDATE(p1 == 0 && p2 == 0 && dataLength > sizeof(uint32_t), ERR_INVALID_REQUEST);
+    VALIDATE(p1 == 0 && p2 == 0 && dataLength > 2 * sizeof(uint32_t), ERR_INVALID_REQUEST);
     SignTransactionContext_t* context = &data_context.sign_tr_context;
 
     context->account_number = readUint32BE(dataBuffer);
+    context->contract_number = readNextUint32BE(dataBuffer);
 
     uint8_t address[ADDRESS_LENGTH];
-    get_address(context->account_number, address);
+    get_address(context->account_number, context->contract_number, address);
 
-    uint8_t* msg_begin = dataBuffer + sizeof(context->account_number);
-    uint8_t msg_length = dataLength - sizeof(context->account_number);
+    uint8_t* msg_begin = dataBuffer + sizeof(context->account_number) + sizeof(context->contract_number);
+    uint8_t msg_length = dataLength - sizeof(context->account_number) - sizeof(context->contract_number);
     ByteStream_t src;
     ByteStream_init(&src, msg_begin, msg_length);
     prepare_to_sign(&src, address);

@@ -59,16 +59,16 @@ python freetoncli.py --getpubkey --account 0
 **Request address:**
 ```bash
 source prepare-devenv.sh s
-python freetoncli.py --getaddr --account 1
+python freetoncli.py --getaddr --account 1 --contract 0
 ```
 
-**Deploy Wallet contract:**
+**Deploy Safe Multisig Wallet contract:**
 
 ```bash
 source prepare-devenv.sh s
-python freetoncli.py --getaddr --account 1 # get future address of the contract
+python freetoncli.py --getaddr --account 0 --contract 0 # get future address of the Safe Multisig contract for account 0
 # send some tokens to the received address (about 0.5 should be enough)
-python freetoncli.py --url https://main.ton.dev --account 1 deploy
+python freetoncli.py --url https://main.ton.dev --account 0 --contract 0 deploy
 # you will be asked for signature on device
 ```
 Now you can send some tokens from the newly created address
