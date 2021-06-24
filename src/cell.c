@@ -100,3 +100,40 @@ void calc_cell_hash(Cell_t* cell, const uint8_t cell_index) {
     int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes + cell_index * HASH_SIZE, HASH_SIZE);
     VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
 }
+
+void calc_root_cell_hash(Cell_t* cell) {
+    BocContext_t* bc = &boc_context;
+    ContractContext_t* cc = &contract_context;
+
+    uint8_t hash_buffer[262]; // d1(1) + d2(1) + data(128) + 4 * (depth(1) + hash(32))
+
+    uint16_t hash_buffer_offset = 0;
+    hash_buffer[0] = Cell_get_d1(cell);
+    hash_buffer[1] = Cell_get_d2(cell);
+    hash_buffer_offset += 2;
+
+    uint8_t data_size = Cell_get_data_size(cell);
+    os_memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
+    hash_buffer_offset += data_size;
+
+    // code hash child
+    hash_buffer[hash_buffer_offset] = 0x00;
+    hash_buffer[hash_buffer_offset + 1] = cc->wallet_code_child_depth;
+    hash_buffer_offset += 2;
+
+    // data hash child
+    hash_buffer[hash_buffer_offset] = 0x00;
+    hash_buffer[hash_buffer_offset + 1] = cc->wallet_data_child_depth;
+    hash_buffer_offset += 2;
+
+    // append code hash
+    os_memcpy(hash_buffer + hash_buffer_offset, cc->code_hash, HASH_SIZE);
+    hash_buffer_offset += HASH_SIZE;
+
+    // append data hash
+    os_memcpy(hash_buffer + hash_buffer_offset, bc->hashes + HASH_SIZE, HASH_SIZE);
+    hash_buffer_offset += HASH_SIZE;
+
+    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes, HASH_SIZE);
+    VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+}

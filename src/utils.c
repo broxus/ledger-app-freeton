@@ -33,6 +33,11 @@ uint32_t readUint32BE(uint8_t *buffer) {
   return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | (buffer[3]);
 }
 
+uint32_t readNextUint32BE(uint8_t *buffer) {
+  uint8_t *data = buffer + sizeof(uint32_t);
+  return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+}
+
 static const uint32_t HARDENED_OFFSET = 0x80000000;
 
 void get_private_key(uint32_t account_number, cx_ecfp_private_key_t *privateKey) {

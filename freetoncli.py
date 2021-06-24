@@ -20,7 +20,7 @@ handler = logging.handlers.RotatingFileHandler(filename='freetoncli.log', maxByt
 logger.addHandler(handler)
 
 WALLET_DIR = 'wallet'
-WALLET_NAME = 'Wallet'
+WALLET_NAME = 'SafeMultisigWallet'
 
 INS_GET_APP_CONFIGURATION = 0x01
 INS_GET_PUBLIC_KEY = 0x02
@@ -36,8 +36,9 @@ class WalletException(Exception):
 
 
 class Ledger:
-    def __init__(self, account: int, workchain: int, debug=False):
+    def __init__(self, account: int, contract: int, workchain: int, debug=False):
         self.account = account.to_bytes(4, byteorder='big')
+        self.contract = contract.to_bytes(4, byteorder='big')
         self.transport = Transport(interface='hid', debug=debug)
         self.workchain = workchain
 
@@ -55,7 +56,7 @@ class Ledger:
     def get_address(self, confirm = False) -> str:
         if confirm:
             logger.info('Please confirm address on device')
-        payload = self.account
+        payload = self.account + self.contract
         sw, response = self.transport.exchange(cla=CLA, ins=INS_GET_ADDRESS, p1=confirm, cdata=payload)
         if sw != SUCCESS:
             raise WalletException('get_address error: {:X}'.format(sw))
@@ -103,7 +104,7 @@ class Wallet:
 
     def prepare_call(self, public_key: str, address: str, function_name: str, inputs: dict, deploy_set=None):
         call_set = CallSet(function_name=function_name, header={'pubkey': public_key, 'expire': int(time.time()) + 60}, inputs=inputs)
-        
+
         signer = Signer(public=public_key)
         unsigned_msg = self.client.abi.encode_message(abi=self.abi, signer=signer, address=address, deploy_set=deploy_set, call_set=call_set)
         return unsigned_msg
@@ -132,7 +133,7 @@ class Wallet:
         logger.info('Deploying {} to {}'.format(WALLET_NAME, self.ledger.get_address()))
         deploy_set = DeploySet(tvc=base64.b64encode(self.tvc).decode())
         public_key = self.ledger.get_public_key()
-        unsigned_msg = self.prepare_call(public_key, None, 'constructor', {}, deploy_set)
+        unsigned_msg = self.prepare_call(public_key, None, 'constructor', {'owners': [], 'reqConfirms': 0}, deploy_set)
         signature = self.sign(unsigned_msg['data_to_sign'])
         self.call(public_key, unsigned_msg, signature)
 
@@ -165,6 +166,7 @@ class ArgParser(argparse.ArgumentParser):
 def main():
     parser = ArgParser()
     parser.add_argument('-a', '--account', default=0, type=int, help='BIP32 account to retrieve (default 0)')
+    parser.add_argument('-c', '--contract', default=0, type=int, help='Smart contract (default SafeMultisig)')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logs')
     parser.add_argument('-u', '--url', default=MAINNET_BASE_URL, help='Server address (default {})'.format(MAINNET_BASE_URL))
     parser.add_argument('--wc', default=0, type=int, help='Workchain id (default 0)')
@@ -190,9 +192,12 @@ def main():
 
     if args.account < 0 or args.account > 4294967295:
         raise WalletException('account number must be between 0 and 4294967295')
-    
+
+    if args.contract < 0 or args.contract > 3:
+        raise WalletException('contract number must be between 0 and 3')
+
     server_address = args.url
-    ledger = Ledger(account=args.account, workchain=args.wc, debug=args.debug)
+    ledger = Ledger(account=args.account, contract=args.contract, workchain=args.wc, debug=args.debug)
     if args.getaddr:
         logger.info('Getting address')
         logger.info('Address: {}'.format(ledger.get_address()))

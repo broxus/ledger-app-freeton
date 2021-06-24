@@ -43,15 +43,15 @@ if [ ! -d dev-env ]; then
     rm clang+llvm.tar.xz
     mv clang+llvm* dev-env/CC/others/clang-arm-fropi
 
-    wget http://releases.llvm.org/7.0.0/clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O clang+llvm.tar.xz
-    tar xf clang+llvm.tar.xz
-    rm clang+llvm.tar.xz
-    mv clang+llvm* dev-env/CC/nanox/clang-arm-fropi
-
     wget https://github.com/LedgerHQ/nanos-secure-sdk/archive/2.0.0-1.tar.gz -O nanos-secure-sdk.tar.gz
     tar xf nanos-secure-sdk.tar.gz
     rm nanos-secure-sdk.tar.gz
     mv nanos-secure-sdk* dev-env/SDK/nanos-secure-sdk
+
+    wget https://github.com/LedgerHQ/nanox-secure-sdk/archive/1.2.4-5.1.tar.gz -O nanox-secure-sdk.tar.gz
+    tar xf nanox-secure-sdk.tar.gz
+    rm nanox-secure-sdk.tar.gz
+    mv nanox-secure-sdk* dev-env/SDK/nanox-secure-sdk
 
     python3 -m venv venv
     source venv/bin/activate
