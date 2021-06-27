@@ -50,19 +50,21 @@ All examples are written for Linux and assumes Python 3.8 is installed as defaul
 
 For Mac OS and Windows prepare environment by running `python -m pip install -r requirements.txt` and skip execution of `source prepare-devenv.sh s`. For Mac OS use python3 instead of python.
 
+**Important**: CLI supports only Safe Multisig Wallet (contract number 0; more information about in [`documentation`](doc/freetonapp.asc))
+
 **Request public key:**
 ```bash
 source prepare-devenv.sh s
 python freetoncli.py --getpubkey --account 0
 ```
 
-**Request address:**
+**Request address for Safe Multisig Wallet:**
 ```bash
 source prepare-devenv.sh s
 python freetoncli.py --getaddr --account 1 --contract 0
 ```
 
-**Deploy Safe Multisig Wallet contract:**
+**Deploy Safe Multisig Wallet:**
 
 ```bash
 source prepare-devenv.sh s
@@ -74,7 +76,7 @@ python freetoncli.py --url https://main.ton.dev --account 0 --contract 0 deploy
 ```
 Now you can send some tokens from the newly created address
 
-**Send tokens:**
+**Send tokens from Safe Multisig Wallet:**
 
 ```bash
 source prepare-devenv.sh s
