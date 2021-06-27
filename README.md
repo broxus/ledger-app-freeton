@@ -68,6 +68,7 @@ python freetoncli.py --getaddr --account 1 --contract 0
 source prepare-devenv.sh s
 python freetoncli.py --getaddr --account 0 --contract 0 # get future address of the Safe Multisig contract for account 0
 # send some tokens to the received address (about 0.5 should be enough)
+python freetoncli.py --account 0 --contract 0 --balance # check balance before deploy
 python freetoncli.py --url https://main.ton.dev --account 0 --contract 0 deploy
 # you will be asked for signature on device
 ```
@@ -77,7 +78,7 @@ Now you can send some tokens from the newly created address
 
 ```bash
 source prepare-devenv.sh s
-python freetoncli.py --url main.ton.dev --account 0 send --dest 0:9ff3d2dea4bb74f6cf55d4ff7186bc6b6bb1f3c57338a7ffcb57528b35ddc4af --value 111.111111111
+python freetoncli.py --url main.ton.dev --account 0 --contract 0 send --dest 0:b3e44db0197dff175f5b71e1003bd57d2e8068892839874eefc8ca95106a8435 --value 0.1
 # you will be asked for signature on device
 ```
 

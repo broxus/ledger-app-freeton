@@ -28,15 +28,13 @@ void deserialize_cells_tree(struct ByteStream_t* src) {
     uint8_t offset_size = ByteStream_read_byte(src);
     VALIDATE(offset_size != 0 && offset_size <= 8, ERR_INVALID_DATA);
 
-    uint8_t cells_count = ByteStream_read_byte(src);
-    UNUSED(cells_count);
+    uint8_t cells_count = ByteStream_read_byte(src);   // move cursor
+    cells_count = contract_context.wallet_cells_count; // use only N first of cells
 
     uint8_t roots_count = ByteStream_read_byte(src);
     VALIDATE(roots_count == MAX_ROOTS_COUNT, ERR_INVALID_DATA);
-
-    uint8_t wallet_cells_count = contract_context.wallet_cells_count;
-    VALIDATE(wallet_cells_count <= MAX_CONTRACT_CELLS_COUNT, ERR_INVALID_DATA);
-    boc_context.cells_count = wallet_cells_count;
+    VALIDATE(cells_count <= MAX_CONTRACT_CELLS_COUNT, ERR_INVALID_DATA);
+    boc_context.cells_count = cells_count;
 
     {
         uint8_t absent_count = ByteStream_read_byte(src);
@@ -48,10 +46,10 @@ void deserialize_cells_tree(struct ByteStream_t* src) {
     }
 
     Cell_t cell;
-    for (uint8_t i = 0; i < wallet_cells_count; ++i) {
+    for (uint8_t i = 0; i < cells_count; ++i) {
         uint8_t* cell_begin = ByteStream_get_cursor(src);
         Cell_init(&cell, cell_begin);
-        uint16_t offset = deserialize_cell(&cell, i, wallet_cells_count);
+        uint16_t offset = deserialize_cell(&cell, i, cells_count);
         boc_context.cells[i] = cell;
         ByteStream_read_data(src, offset);
     }
