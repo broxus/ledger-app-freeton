@@ -5,10 +5,6 @@
 #include "utils.h"
 #include "errors.h"
 #include "hashmap_label.h"
-#include "contracts/safe_multisig.h"
-#include "contracts/safe_multisig_24h.h"
-#include "contracts/setcode_multisig.h"
-#include "contracts/surf.h"
 
 void deserialize_cells_tree(struct ByteStream_t* src) {
     {

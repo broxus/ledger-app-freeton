@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "contract.h"
 #include "globals.h"
 
 const uint8_t setcode_multisig_code_hash[] = { 0xe2, 0xb6, 0x0b, 0x6b, 0x60, 0x2c, 0x10, 0xce,

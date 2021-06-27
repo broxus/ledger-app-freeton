@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "contract.h"
 #include "globals.h"
 
 const uint8_t surf_code_hash[] = { 0x20, 0x7d, 0xc5, 0x60, 0xc5, 0x95, 0x6d, 0xe1,

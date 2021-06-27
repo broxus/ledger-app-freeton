@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "contract.h"
 #include "globals.h"
 
 const uint8_t safe_multisig_24h_code_hash[] = { 0x7d, 0x09, 0x96, 0x94, 0x34, 0x06, 0xf7, 0xd6,
