@@ -116,12 +116,12 @@ void calc_root_cell_hash(Cell_t* cell) {
     os_memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
     hash_buffer_offset += data_size;
 
-    // code hash child
+    // code hash child depth
     hash_buffer[hash_buffer_offset] = 0x00;
     hash_buffer[hash_buffer_offset + 1] = cc->wallet_code_child_depth;
     hash_buffer_offset += 2;
 
-    // data hash child
+    // data hash child depth
     hash_buffer[hash_buffer_offset] = 0x00;
     hash_buffer[hash_buffer_offset + 1] = cc->wallet_data_child_depth;
     hash_buffer_offset += 2;

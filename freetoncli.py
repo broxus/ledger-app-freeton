@@ -194,7 +194,7 @@ def main():
     if args.account < 0 or args.account > 4294967295:
         raise WalletException('account number must be between 0 and 4294967295')
 
-    if args.contract < 0 or args.contract > 3:
+    if args.contract < 0 or args.contract > 4:
         raise WalletException('contract number must be between 0 and 3')
 
     server_address = args.url

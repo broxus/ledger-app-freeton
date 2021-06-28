@@ -81,20 +81,29 @@ void get_address(const uint32_t account_number, const uint32_t contract_number, 
     switch (contract_number) {
         case SAFE_MULTISIG_WALLET:
             safe_multisig_init();
+            compute_address(account_number, address);
             break;
         case SAFE_MULTISIG_24H_WALLET:
             safe_multisig_24h_init();
+            compute_address(account_number, address);
             break;
         case SETCODE_MULTISIG_WALLET:
             setcode_multisig_init();
+            compute_address(account_number, address);
             break;
         case SURF_WALLET:
             surf_init();
+            compute_address(account_number, address);
+            break;
+        case WALLET_V3:
+            compute_address_wallet_v3(account_number, address);
             break;
         default:
             THROW(ERR_INVALID_CONTRACT);
     }
+}
 
+void compute_address(const uint32_t account_number, uint8_t* address) {
     BocContext_t* bc = &boc_context;
     ContractContext_t* cc = &contract_context;
 
