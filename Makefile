@@ -22,6 +22,10 @@ include $(BOLOS_SDK)/Makefile.defines
 
 APP_LOAD_PARAMS= --curve ed25519 --path "44'/396'" --appFlags 0x240 $(COMMON_LOAD_PARAMS)
 
+# Pending review parameters
+APP_LOAD_PARAMS += --tlvraw 9F:01
+DEFINES += HAVE_PENDING_REVIEW_SCREEN
+
 APPVERSION_M=1
 APPVERSION_N=0
 APPVERSION_P=0
