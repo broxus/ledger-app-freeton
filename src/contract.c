@@ -28,8 +28,8 @@ void deserialize_cells_tree(struct ByteStream_t* src) {
     uint8_t offset_size = ByteStream_read_byte(src);
     VALIDATE(offset_size != 0 && offset_size <= 8, ERR_INVALID_DATA);
 
-    uint8_t cells_count = ByteStream_read_byte(src);   // move cursor
-    cells_count = contract_context.wallet_cells_count; // use only N first of cells
+    ByteStream_read_byte(src);   // move cursor
+    uint8_t cells_count = contract_context.wallet_cells_count; // use only N first of cells
 
     uint8_t roots_count = ByteStream_read_byte(src);
     VALIDATE(roots_count == MAX_ROOTS_COUNT, ERR_INVALID_DATA);
