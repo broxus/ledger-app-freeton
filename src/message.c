@@ -87,7 +87,8 @@ void set_amount(struct SliceData_t* slice) {
 
     char* amount_str = data_context.sign_tr_context.amount_str;
     uint8_t text_size = convert_hex_amount_to_displayable(amount, amount_length, amount_str);
-    strcpy(amount_str + text_size, " TON");
+    char ton_text[] = " TON";
+    strlcpy(amount_str + text_size, ton_text, strlen(ton_text));
 }
 
 void le_to_be(uint8_t* le, uint8_t* be, uint8_t size) {
