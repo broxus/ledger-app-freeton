@@ -53,13 +53,13 @@ if [ ! -d dev-env ]; then
     rm nanox-secure-sdk.tar.gz
     mv nanox-secure-sdk* dev-env/SDK/nanox-secure-sdk
 
-    python3.8 -m venv venv
+    virtualenv -p python3.8 venv
     source venv/bin/activate
     pip install -r requirements.txt
 fi
 
 # Temp decision to avoid rebuild set of compilers
-python3.8 -m venv venv
+virtualenv -p python3.8 venv
 source venv/bin/activate
 pip install -r requirements.txt
 
