@@ -42,6 +42,9 @@ class Ledger:
         self.transport = Transport(interface='hid', debug=debug)
         self.workchain = workchain
 
+    def __del__(self):
+        self.transport.close()
+
     def get_public_key(self, confirm = False) -> str:
         if confirm:
             logger.info('Please confirm public key on device')
