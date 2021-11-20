@@ -16,7 +16,7 @@ Install prerequisite and switch to a Nano S dev-env:
 
 ```bash
 sudo apt install gcc make gcc-multilib g++-multilib libncurses5
-sudo apt install python3-venv python3-dev libudev-dev libusb-1.0-0-dev
+sudo apt install python3.8-venv python3.8-dev libudev-dev libusb-1.0-0-dev
 
 # (s or x, depending on your device)
 source prepare-devenv.sh s 
