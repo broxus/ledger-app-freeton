@@ -5,6 +5,10 @@
 
 #include <stdlib.h>
 
+#define AMOUNT_MAX_SIZE 21
+
+static const char hexAlphabet[] = "0123456789ABCDEF";
+
 static cx_ecfp_public_key_t publicKey;
 void get_public_key(uint32_t account_number, uint8_t* publicKeyArray) {
     cx_ecfp_private_key_t privateKey;
@@ -33,9 +37,10 @@ uint32_t readUint32BE(uint8_t *buffer) {
   return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | (buffer[3]);
 }
 
-uint32_t readNextUint32BE(uint8_t *buffer) {
-  uint8_t *data = buffer + sizeof(uint32_t);
-  return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+uint64_t readUint64BE(uint8_t *buffer) {
+    uint32_t i1 = buffer[3] + (buffer[2] << 8u) + (buffer[1] << 16u) + (buffer[0] << 24u);
+    uint32_t i2 = buffer[7] + (buffer[6] << 8u) + (buffer[5] << 16u) + (buffer[4] << 24u);
+    return i2 | ((uint64_t) i1 << 32u);
 }
 
 static const uint32_t HARDENED_OFFSET = 0x80000000;
@@ -172,4 +177,82 @@ uint8_t convert_hex_amount_to_displayable(uint8_t* amount, uint8_t amount_length
         out[targetOffset++] = scratch[offset++] + '0';
     }
     return targetOffset;
+}
+
+void print_binary(const uint8_t *in, char *out, uint8_t len) {
+    out[0] = '0';
+    out[1] = ':';
+    uint8_t i, j;
+    for (i = 0, j = 2; i < len; i += 1, j += 2) {
+        out[j] = hexAlphabet[in[i] / 16];
+        out[j + 1] = hexAlphabet[in[i] % 16];
+    }
+    out[j] = '\0';
+}
+
+void print_address(const uint8_t *in, char *out, uint8_t len) {
+    out[0] = '0';
+    out[1] = ':';
+    if (2 + len * 2 > 18) {
+        uint8_t i, j;
+        for (i = 0, j = 2; i < 3; i += 1, j += 2) {
+            out[j] = hexAlphabet[in[i] / 16];
+            out[j + 1] = hexAlphabet[in[i] % 16];
+        }
+        out[j++] = '.';
+        out[j++] = '.';
+        for (i = len - 3; i < len; i += 1, j += 2) {
+            out[j] = hexAlphabet[in[i] / 16];
+            out[j + 1] = hexAlphabet[in[i] % 16];
+        }
+        out[j] = '\0';
+    } else {
+        print_binary(in, out, len);
+        return;
+    }
+}
+
+int print_amount(uint64_t amount, char *out, size_t out_len) {
+    char buffer[AMOUNT_MAX_SIZE] = {0};
+    uint64_t dVal = amount;
+    int i;
+
+    for (i = 0; dVal > 0 || i < 11; i++) {
+        if (dVal > 0) {
+            buffer[i] = (dVal % 10) + '0';
+            dVal /= 10;
+        } else {
+            buffer[i] = '0';
+        }
+        if (i == 8) {
+            i += 1;
+            buffer[i] = '.';
+        }
+        if (i >= AMOUNT_MAX_SIZE) {
+            return -1;
+        }
+    }
+
+    // reverse order
+    for (int j = 0; j < i / 2; j++) {
+        char c = buffer[j];
+        buffer[j] = buffer[i - j - 1];
+        buffer[i - j - 1] = c;
+    }
+
+    // strip trailing 0s
+    i -= 1;
+    while (buffer[i] == '0') {
+        buffer[i] = 0;
+        i -= 1;
+    }
+    // strip trailing .
+    if (buffer[i] == '.') buffer[i] = 0;
+    strlcpy(out, buffer, out_len);
+
+    strlcpy(buffer, "TON", AMOUNT_MAX_SIZE);
+    strlcat(out, " ", out_len);
+    strlcat(out, buffer, out_len);
+
+    return 0;
 }

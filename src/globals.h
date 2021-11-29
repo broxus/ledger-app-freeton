@@ -15,7 +15,7 @@
 #define BIP32_PATH 5
 #define TO_SIGN_LENGTH 32
 #define SIGNATURE_LENGTH 64
-#define MAX_AMOUNT_LENGTH 0x10
+#define MAX_AMOUNT_LENGTH 16
 #define HASH_SIZE 32
 #define BOC_GENERIC_TAG 0xb5ee9c72
 #define MAX_ROOTS_COUNT 1
@@ -54,10 +54,14 @@ typedef struct PublicKeyContext_t {
 } PublicKeyContext_t;
 
 typedef struct SignContext_t {
-    uint8_t to_sign[TO_SIGN_LENGTH];
-    uint8_t signature[SIGNATURE_LENGTH];
     uint32_t account_number;
-    char to_sign_str[65];
+    uint64_t amount;
+    uint8_t  dst_account_id[ADDRESS_LENGTH];
+    uint8_t  to_sign[TO_SIGN_LENGTH];
+    uint8_t  signature[SIGNATURE_LENGTH];
+    char     dst_address_str[ADDRESS_LENGTH];
+    char     amount_str[27];
+    char     to_sign_str[65];
 } SignContext_t;
 
 typedef struct SignTransactionContext_t {

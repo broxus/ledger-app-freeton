@@ -79,7 +79,7 @@ void handleSignTransaction(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t
     SignTransactionContext_t* context = &data_context.sign_tr_context;
 
     context->account_number = readUint32BE(dataBuffer);
-    context->contract_number = readNextUint32BE(dataBuffer);
+    context->contract_number = readUint32BE(dataBuffer + sizeof(context->account_number));
 
     uint8_t address[ADDRESS_LENGTH];
     get_address(context->account_number, context->contract_number, address);

@@ -30,7 +30,6 @@ INS_SIGN_TRANSACTION = 0x05
 CLA = 0xe0
 SUCCESS = 0x9000
 
-
 class WalletException(Exception):
     pass
 
@@ -67,22 +66,13 @@ class Ledger:
         address = '{}:{}'.format(self.workchain, response[1:].hex())
         return address
 
-    def sign(self, to_sign: bytes) -> str:
-        payload = self.account + to_sign
+    def sign(self, amount: bytes, account_id: bytes, to_sign: bytes) -> str:
+        payload = self.account + amount + account_id + to_sign
         sw, response = self.transport.exchange(cla=CLA, ins=INS_SIGN, cdata=payload)
         if sw != SUCCESS:
             raise WalletException('sign error: {:X}'.format(sw))
 
         return response[1:].hex()
-
-    def sign_transaction(self, transaction_boc: bytes) -> str:
-        payload = self.account + self.contract + transaction_boc
-        sw, response = self.transport.exchange(cla=CLA, ins=INS_SIGN_TRANSACTION, cdata=payload)
-        if sw != SUCCESS:
-            raise WalletException('sign_transaction error: {:X}'.format(sw))
-
-        return response[1:].hex()
-
 
 class Wallet:
     def __init__(self, client: TonClient, ledger: Ledger):
@@ -99,10 +89,14 @@ class Wallet:
         with open(tvc_path, 'rb') as f:
             self.tvc = f.read()
 
-    def sign(self, to_sign_b64: str):
+    def sign(self, amount: int, dest: str, to_sign_b64: str):
+        amount = amount.to_bytes(8, byteorder='big')
+        _, account_id = dest.split(":")
+
         to_sign = base64.b64decode(to_sign_b64)
         logger.info('Please confirm signature on device: {}'.format(to_sign.hex()))
-        signature = self.ledger.sign(to_sign)
+
+        signature = self.ledger.sign(amount, bytes.fromhex(account_id), to_sign)
         return signature
 
     def prepare_call(self, public_key: str, address: str, function_name: str, inputs: dict, deploy_set=None):
@@ -114,7 +108,7 @@ class Wallet:
 
     def call(self, public_key: str, unsigned_msg: str, signature: str):
         msg = self.client.abi.attach_signature(abi=self.abi, public_key=public_key, message=unsigned_msg['message'], signature=signature)
-        
+
         logger.info('Transaction in progress')
         shard_block_id = self.client.processing.send_message(message=msg['message'], send_events=False, abi=self.abi)
         result = self.client.processing.wait_for_transaction(message=msg['message'], shard_block_id=shard_block_id, send_events=False, abi=self.abi)
@@ -123,22 +117,21 @@ class Wallet:
         else:
             logger.info('Transaction aborted')
 
-    def send(self, dest: str, value: int):
+    def send(self, value: int, dest: str):
         src = self.ledger.get_address()
-        logger.info('Send {:g} tokens from {} to {}'.format(value / 1000000000, src, dest))
+        logger.info('Send {} tokens from {} to {}'.format(value / 1_000_000_000, src, dest))
         public_key = self.ledger.get_public_key()
-        unsigned_msg = self.prepare_call(public_key, src, 'submitTransaction', {'dest': dest, 'value': value, 'bounce': False, 'allBalance': False, 'payload': ""})
-        signature = self.sign(unsigned_msg['data_to_sign'])
-        #to_sign = base64.b64decode(unsigned_msg['message'])
-        #signature = self.ledger.sign_transaction(to_sign)
+        unsigned_msg = self.prepare_call(public_key, src, 'sendTransaction', {'dest': dest, 'value': value, 'bounce': False, 'flags': 3, 'payload': ""})
+        signature = self.sign(value, dest, unsigned_msg['data_to_sign'])
         self.call(public_key, unsigned_msg, signature)
 
     def deploy(self):
-        logger.info('Deploying {} to {}'.format(WALLET_NAME, self.ledger.get_address()))
+        src = self.ledger.get_address()
+        logger.info('Deploying {} to {}'.format(WALLET_NAME, src))
         deploy_set = DeploySet(tvc=base64.b64encode(self.tvc).decode())
         public_key = self.ledger.get_public_key()
         unsigned_msg = self.prepare_call(public_key, None, 'constructor', {'owners': [f"0x{public_key}"], 'reqConfirms': 1}, deploy_set)
-        signature = self.sign(unsigned_msg['data_to_sign'])
+        signature = self.sign(500_000_000, src, unsigned_msg['data_to_sign'])
         self.call(public_key, unsigned_msg, signature)
 
     def run_tvm(self, address, function_name, inputs):
@@ -226,10 +219,12 @@ def main():
         if args.subcommand == 'send':
             if args.contract != 0:
                 raise WalletException('CLI supports only Safe Multisig smart contract (number 0)')
-            value = int(args.value * 1000000000)
-            if value < 1000000:
-                raise WalletException('value must be more or equal 1000000 nanotokens')
-            wallet.send(args.dest, value)
+            value = int(args.value * 1_000_000_000)
+            if value < 1_000_000:
+                raise WalletException('value must be more or equal 1_000_000 nanotokens')
+            if value > 1_000_000_000_000_000_000:
+                raise WalletException('value must be less or equal 1_000_000_000 tokens')
+            wallet.send(value, args.dest)
             return
         if args.subcommand == 'deploy':
             if args.contract != 0:
