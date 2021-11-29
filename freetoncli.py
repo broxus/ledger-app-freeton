@@ -219,11 +219,12 @@ def main():
         if args.subcommand == 'send':
             if args.contract != 0:
                 raise WalletException('CLI supports only Safe Multisig smart contract (number 0)')
-            value = int(args.value * 1_000_000_000)
+            value = round(args.value, 9)
+            value = int(value * 1_000_000_000)
             if value < 1_000_000:
                 raise WalletException('value must be more or equal 1_000_000 nanotokens')
-            if value > 1_000_000_000_000_000_000:
-                raise WalletException('value must be less or equal 1_000_000_000 tokens')
+            if value > 10_000_000_000_000_000:
+                raise WalletException('value must be less or equal 10_000_000 tokens')
             wallet.send(value, args.dest)
             return
         if args.subcommand == 'deploy':
