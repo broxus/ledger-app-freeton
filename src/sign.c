@@ -28,24 +28,22 @@ UX_STEP_NOCB(
     pnn,
     {
       &C_icon_certificate,
-      "Sign",
-      "message",
+      "Review",
+      "transaction",
     });
 UX_STEP_NOCB(
     ux_sign_flow_2_step,
     bnnn_paging,
     {
-      .title = "Message hash",
-      .text = data_context.sign_context.to_sign_str,
+      .title = "Amount",
+      .text = data_context.sign_context.amount_str,
     });
-UX_STEP_CB(
+UX_STEP_NOCB(
     ux_sign_flow_3_step,
-    pbb,
-    send_response(0, false),
+    bnnn_paging,
     {
-      &C_icon_crossmark,
-      "Cancel",
-      "signature",
+      .title = "Address",
+      .text = data_context.sign_context.dst_address_str,
     });
 UX_STEP_CB(
     ux_sign_flow_4_step,
@@ -53,25 +51,38 @@ UX_STEP_CB(
     send_response(set_result_sign(), true),
     {
       &C_icon_validate_14,
-      "Sign",
-      "message",
+      "Accept",
+      "and send",
+    });
+UX_STEP_CB(
+    ux_sign_flow_5_step,
+    pbb,
+    send_response(0, false),
+    {
+      &C_icon_crossmark,
+      "Reject",
     });
 
 UX_FLOW(ux_sign_flow,
     &ux_sign_flow_1_step,
     &ux_sign_flow_2_step,
     &ux_sign_flow_3_step,
-    &ux_sign_flow_4_step
+    &ux_sign_flow_4_step,
+    &ux_sign_flow_5_step
 );
 
 void handleSign(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
     VALIDATE(p1 == 0 && p2 == 0, ERR_INVALID_REQUEST);
     SignContext_t* context = &data_context.sign_context;
-    VALIDATE(dataLength == (sizeof(context->account_number) + sizeof(context->to_sign)), ERR_INVALID_REQUEST);
+    VALIDATE(dataLength == (sizeof(context->account_number) + sizeof(context->amount) + sizeof(context->dst_account_id) + sizeof(context->to_sign)), ERR_INVALID_REQUEST);
 
     context->account_number = readUint32BE(dataBuffer);
-    memcpy(context->to_sign, dataBuffer + sizeof(context->account_number), TO_SIGN_LENGTH);
-    snprintf(context->to_sign_str, sizeof(context->to_sign_str), "%.*h", sizeof(context->to_sign), context->to_sign);
+    context->amount = readUint64BE(dataBuffer + sizeof(context->account_number));
+    memcpy(context->dst_account_id, dataBuffer + sizeof(context->account_number) + sizeof(context->amount), ADDRESS_LENGTH);
+    memcpy(context->to_sign, dataBuffer + sizeof(context->account_number) + sizeof(context->amount) + sizeof(context->dst_account_id), TO_SIGN_LENGTH);
+
+    print_amount(context->amount, context->amount_str, sizeof(context->amount_str));
+    print_address(context->dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
 
     ux_flow_init(0, ux_sign_flow, NULL);
     *flags |= IO_ASYNCH_REPLY;
