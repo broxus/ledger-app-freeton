@@ -11,14 +11,14 @@ static uint8_t set_result_sign() {
             get_private_key(context->account_number, &privateKey);
             cx_eddsa_sign(&privateKey, CX_LAST, CX_SHA512, context->to_sign, TO_SIGN_LENGTH, NULL, 0, context->signature, SIGNATURE_LENGTH, NULL);
         } FINALLY {
-            os_memset(&privateKey, 0, sizeof(privateKey));
+            memset(&privateKey, 0, sizeof(privateKey));
         }
     }
     END_TRY;
 
     uint8_t tx = 0;
     G_io_apdu_buffer[tx++] = SIGNATURE_LENGTH;
-    os_memmove(G_io_apdu_buffer + tx, context->signature, SIGNATURE_LENGTH);
+    memmove(G_io_apdu_buffer + tx, context->signature, SIGNATURE_LENGTH);
     tx += SIGNATURE_LENGTH;
     return tx;
 }
@@ -27,7 +27,7 @@ UX_STEP_NOCB(
     ux_sign_flow_1_step,
     pnn,
     {
-      &C_icon_certificate,
+      &C_icon_eye,
       "Review",
       "transaction",
     });
@@ -47,20 +47,20 @@ UX_STEP_NOCB(
     });
 UX_STEP_CB(
     ux_sign_flow_4_step,
-    pbb,
+    pnn,
     send_response(set_result_sign(), true),
     {
       &C_icon_validate_14,
-      "Accept",
-      "and send",
+      "Finalize",
+      "Transaction",
     });
 UX_STEP_CB(
     ux_sign_flow_5_step,
-    pbb,
+    pb,
     send_response(0, false),
     {
       &C_icon_crossmark,
-      "Reject",
+      "Cancel",
     });
 
 UX_FLOW(ux_sign_flow,
@@ -82,7 +82,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength
     memcpy(context->to_sign, dataBuffer + sizeof(context->account_number) + sizeof(context->amount) + sizeof(context->dst_account_id), TO_SIGN_LENGTH);
 
     print_amount(context->amount, context->amount_str, sizeof(context->amount_str));
-    print_address(context->dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
+    print_address_short(context->dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
 
     ux_flow_init(0, ux_sign_flow, NULL);
     *flags |= IO_ASYNCH_REPLY;

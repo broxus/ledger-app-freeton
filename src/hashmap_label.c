@@ -37,7 +37,7 @@ void put_to_node(uint8_t cell_index, uint16_t bit_len, struct SliceData_t* key) 
 
     SliceData_t label;
     uint8_t label_data[8];
-    os_memset(label_data, 0, sizeof(label_data));
+    memset(label_data, 0, sizeof(label_data));
     SliceData_init(&label, label_data, sizeof(label_data));
     get_label(bit_len, &slice, &label);
 

@@ -3,10 +3,6 @@
 ## Overview
 Free TON Ledger app for Ledger Nano S/X
 
-Video demonstration:
-
-[![Free TON application on Leger Nano S](https://i.imgur.com/1X3wW9n.png)](https://youtu.be/QVHLJHUNEJU "Free TON application on Leger Nano S")
-
 ## Building and installing
 To build and install the app on your Ledger Nano S you must set up the Ledger Nano S build environments. Please follow the Getting Started instructions at [here](https://ledger.readthedocs.io/en/latest/userspace/getting_started.html).
 
@@ -64,7 +60,7 @@ python freetoncli.py --getpubkey --account 0
 **Request address for Safe Multisig Wallet:**
 ```bash
 source prepare-devenv.sh s
-python freetoncli.py --getaddr --account 1 --contract 0
+python freetoncli.py --getaddr --account 0 --contract 0
 ```
 
 **Deploy Safe Multisig Wallet:**

@@ -1,7 +1,7 @@
 #include "os.h"
 #include "cx.h"
-#include "utils.h"
 #include "menu.h"
+#include "utils.h"
 
 #include <stdlib.h>
 
@@ -20,7 +20,7 @@ void get_public_key(uint32_t account_number, uint8_t* publicKeyArray) {
             cx_ecfp_generate_pair(CX_CURVE_Ed25519, &publicKey, &privateKey, 1);
             io_seproxyhal_io_heartbeat();
         } FINALLY {
-            os_memset(&privateKey, 0, sizeof(privateKey));
+            memset(&privateKey, 0, sizeof(privateKey));
         }
     }
     END_TRY;
@@ -62,7 +62,7 @@ void get_private_key(uint32_t account_number, cx_ecfp_private_key_t *privateKey)
             cx_ecfp_init_private_key(CX_CURVE_Ed25519, privateKeyData, 32, privateKey);
             io_seproxyhal_io_heartbeat();
         } FINALLY {
-            os_memset(privateKeyData, 0, sizeof(privateKeyData));
+            memset(privateKeyData, 0, sizeof(privateKeyData));
         }
     }
     END_TRY;
@@ -179,9 +179,9 @@ uint8_t convert_hex_amount_to_displayable(uint8_t* amount, uint8_t amount_length
     return targetOffset;
 }
 
-void print_binary(const uint8_t *in, char *out, uint8_t len) {
+void print_public_key(const uint8_t *in, char *out, uint8_t len) {
     out[0] = '0';
-    out[1] = ':';
+    out[1] = 'x';
     uint8_t i, j;
     for (i = 0, j = 2; i < len; i += 1, j += 2) {
         out[j] = hexAlphabet[in[i] / 16];
@@ -193,23 +193,29 @@ void print_binary(const uint8_t *in, char *out, uint8_t len) {
 void print_address(const uint8_t *in, char *out, uint8_t len) {
     out[0] = '0';
     out[1] = ':';
-    if (2 + len * 2 > 18) {
-        uint8_t i, j;
-        for (i = 0, j = 2; i < 3; i += 1, j += 2) {
-            out[j] = hexAlphabet[in[i] / 16];
-            out[j + 1] = hexAlphabet[in[i] % 16];
-        }
-        out[j++] = '.';
-        out[j++] = '.';
-        for (i = len - 3; i < len; i += 1, j += 2) {
-            out[j] = hexAlphabet[in[i] / 16];
-            out[j + 1] = hexAlphabet[in[i] % 16];
-        }
-        out[j] = '\0';
-    } else {
-        print_binary(in, out, len);
-        return;
+    uint8_t i, j;
+    for (i = 0, j = 2; i < len; i += 1, j += 2) {
+        out[j] = hexAlphabet[in[i] / 16];
+        out[j + 1] = hexAlphabet[in[i] % 16];
     }
+    out[j] = '\0';
+}
+
+void print_address_short(const uint8_t *in, char *out, uint8_t len) {
+    out[0] = '0';
+    out[1] = ':';
+    uint8_t i, j;
+    for (i = 0, j = 2; i < 3; i += 1, j += 2) {
+        out[j] = hexAlphabet[in[i] / 16];
+        out[j + 1] = hexAlphabet[in[i] % 16];
+    }
+    out[j++] = '.';
+    out[j++] = '.';
+    for (i = len - 3; i < len; i += 1, j += 2) {
+        out[j] = hexAlphabet[in[i] / 16];
+        out[j + 1] = hexAlphabet[in[i] % 16];
+    }
+    out[j] = '\0';
 }
 
 int print_amount(uint64_t amount, char *out, size_t out_len) {
