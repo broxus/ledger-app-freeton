@@ -8,7 +8,7 @@
 static uint8_t set_result_get_address() {
     uint8_t tx = 0;
     G_io_apdu_buffer[tx++] = ADDRESS_LENGTH;
-    os_memmove(G_io_apdu_buffer + tx, data_context.addr_context.address, ADDRESS_LENGTH);
+    memmove(G_io_apdu_buffer + tx, data_context.addr_context.address, ADDRESS_LENGTH);
     tx += ADDRESS_LENGTH;
     return tx;
 }
@@ -66,7 +66,7 @@ void handleGetAddress(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t data
     } 
     if (p1 == P1_CONFIRM) {
         AddressContext_t* context = &data_context.addr_context;
-        snprintf(context->address_str, sizeof(context->address_str), "%.*h", sizeof(context->address), context->address);
+        print_address(context->address, context->address_str, sizeof(context->address));
         ux_flow_init(0, ux_display_address_flow, NULL);
         *flags |= IO_ASYNCH_REPLY;
         return;

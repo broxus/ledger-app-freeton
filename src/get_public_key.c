@@ -7,7 +7,7 @@
 static uint8_t set_result_get_public_key() {
     uint8_t tx = 0;
     G_io_apdu_buffer[tx++] = PUBLIC_KEY_LENGTH;
-    os_memmove(G_io_apdu_buffer + tx, data_context.pk_context.public_key, PUBLIC_KEY_LENGTH);
+    memmove(G_io_apdu_buffer + tx, data_context.pk_context.public_key, PUBLIC_KEY_LENGTH);
     tx += PUBLIC_KEY_LENGTH;
     return tx;
 }
@@ -54,7 +54,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
     } 
 
     if (p1 == P1_CONFIRM) {
-        snprintf(context->public_key_str, sizeof(context->public_key_str), "%.*h", sizeof(context->public_key), context->public_key);
+        print_public_key(context->public_key, context->public_key_str, sizeof(context->public_key));
         ux_flow_init(0, ux_display_public_flow, NULL);
         *flags |= IO_ASYNCH_REPLY;
         return;

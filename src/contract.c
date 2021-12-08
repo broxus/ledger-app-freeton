@@ -70,7 +70,7 @@ void find_public_key_cell() {
 
     uint8_t key_buffer[8];
     SliceData_t key;
-    os_memset(key_buffer, 0, sizeof(key_buffer));
+    memset(key_buffer, 0, sizeof(key_buffer));
     SliceData_init(&key, key_buffer, sizeof(key_buffer));
 
     uint16_t bit_len = SliceData_remaining_bits(&key);
@@ -122,7 +122,7 @@ void compute_address(const uint32_t account_number, uint8_t* address) {
     VALIDATE(cell_data_size != 0 && cell_data_size <= MAX_PUBLIC_KEY_CELL_DATA_SIZE, ERR_INVALID_DATA);
     uint8_t* cell_data = Cell_get_data(cell);
 
-    os_memcpy(bc->public_key_cell_data, cell_data, cell_data_size);
+    memcpy(bc->public_key_cell_data, cell_data, cell_data_size);
     uint8_t* public_key = data_context.pk_context.public_key;
     get_public_key(account_number, public_key);
 
@@ -139,5 +139,5 @@ void compute_address(const uint32_t account_number, uint8_t* address) {
 
     calc_root_cell_hash(&bc->cells[0]);
 
-    os_memcpy(address, bc->hashes, HASH_SIZE);
+    memcpy(address, bc->hashes, HASH_SIZE);
 }

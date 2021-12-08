@@ -20,7 +20,7 @@ void SliceData_from_cell(struct SliceData_t* self, struct Cell_t* cell) {
 void SliceData_fill(struct SliceData_t* self, uint8_t value, uint16_t data_size_bytes) {
     VALIDATE(self && self->data, ERR_SLICE_IS_EMPTY);
     VALIDATE(self->data_size_bytes >= data_size_bytes, ERR_INVALID_DATA);
-    os_memset(self->data, value, data_size_bytes);
+    memset(self->data, value, data_size_bytes);
 }
 
 void SliceData_truncate(struct SliceData_t* self, uint16_t size) {
@@ -160,7 +160,7 @@ void SliceData_append(struct SliceData_t* self, uint8_t* in, uint16_t bits, bool
 
     uint16_t offset = self->data_window_start;
     if (offset % 8 == 0 || bytes == 0) {
-        os_memcpy(self->data + offset / 8, in, bytes ? bytes : 1);
+        memcpy(self->data + offset / 8, in, bytes ? bytes : 1);
     }
     else {
         uint8_t shift = offset % 8;
