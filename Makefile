@@ -30,7 +30,7 @@ APPVERSION_M=1
 APPVERSION_N=0
 APPVERSION_P=1
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
-APPNAME = "Free TON"
+APPNAME = "Everscale"
 
 DEFINES += $(DEFINES_LIB)
 
@@ -38,7 +38,7 @@ DEFINES += $(DEFINES_LIB)
 ifeq ($(TARGET_NAME),TARGET_NANOX)
 	ICONNAME=icons/nanox_app_freeton.gif
 else
-	ICONNAME=icons/nanos_app_freeton.gif
+	ICONNAME=icons/nanos_app_everscale.gif
 endif
 
 
@@ -142,6 +142,7 @@ SDK_SOURCE_PATH  += lib_ux
 endif
 
 load: all
+	echo $(APP_LOAD_PARAMS)
 	python3.8 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
 
 delete:
