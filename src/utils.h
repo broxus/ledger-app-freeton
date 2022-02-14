@@ -5,21 +5,26 @@
 #include "cx.h"
 #include "globals.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
-unsigned int ui_prepro(const bagl_element_t *element);
-void get_public_key(uint32_t accountNumber, uint8_t* publicKeyArray);
 uint32_t readUint32BE(uint8_t *buffer);
 uint64_t readUint64BE(uint8_t *buffer);
+
+void get_public_key(uint32_t accountNumber, uint8_t* publicKeyArray);
 void get_private_key(uint32_t accountNumber, cx_ecfp_private_key_t *privateKey);
-void send_response(uint8_t tx, bool approve);
-uint8_t leading_zeros(uint16_t value);
-uint8_t convert_hex_amount_to_displayable(uint8_t* amount, uint8_t amount_length, char* out);
-int print_amount(uint64_t amount, char *out, size_t out_len);
-void print_public_key(const uint8_t *in, char *out, uint8_t len);
+
+int  print_amount(uint64_t amount, char *out, size_t out_length);
 void print_address(const uint8_t *in, char *out, uint8_t len);
 void print_address_short(const uint8_t *in, char *out, uint8_t len);
+
+uint8_t leading_zeros(uint16_t value);
+void send_response(uint8_t tx, bool approve);
+unsigned int ui_prepro(const bagl_element_t *element);
+
+#define BAIL_IF(x) {int err = x; if (err) return err;}
 
 #define VALIDATE(cond, error) \
     do {\
