@@ -130,11 +130,42 @@ void print_address(const uint8_t *in, char *out, uint8_t len) {
     out[j] = '\0';
 }
 
-void print_address_short(const uint8_t *in, char *out, uint8_t len) {
-    out[0] = '0';
-    out[1] = ':';
+void print_address_short(int8_t dst_workchain_id, const uint8_t *in, char *out, uint8_t len) {
+    uint8_t offset = 0;
+
+    uint8_t workchain_id = (uint8_t) dst_workchain_id;
+    if (dst_workchain_id < 0) {
+        out[offset++] = '-';
+        workchain_id = (workchain_id ^ 0xffffffffffffffff) + 1;
+    }
+
+    {
+        uint8_t i = offset;
+        uint8_t j = offset;
+
+        uint8_t dVal = workchain_id;
+        do {
+            if (dVal > 0) {
+                out[i] = (dVal % 10) + '0';
+                dVal /= 10;
+            } else {
+                out[i] = '0';
+            }
+            i++;
+            offset++;
+        } while (dVal > 0);
+
+        out[i--] = ':';
+
+        for (; j < i; j++, i--) {
+            int tmp = out[j];
+            out[j] = out[i];
+            out[i] = tmp;
+        }
+    }
+
     uint8_t i, j;
-    for (i = 0, j = 2; i < 3; i += 1, j += 2) {
+    for (i = 0, j = offset + 1; i < 3; i += 1, j += 2) {
         out[j] = hexAlphabet[in[i] / 16];
         out[j + 1] = hexAlphabet[in[i] % 16];
     }

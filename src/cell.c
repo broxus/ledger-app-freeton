@@ -88,15 +88,15 @@ void calc_cell_hash(Cell_t* cell, const uint8_t cell_index) {
         memcpy(hash_buffer + hash_buffer_offset, buf, sizeof(buf));
         hash_buffer_offset += sizeof(buf);
     }
-    
+
     for (uint8_t child = 0; child < refs_count; ++child) {
-        uint8_t* cell_hash = bc->hashes + refs[child] * HASH_SIZE;
-        memcpy(hash_buffer + hash_buffer_offset, cell_hash, HASH_SIZE);
-        hash_buffer_offset += HASH_SIZE;
+        uint8_t* cell_hash = bc->hashes + refs[child] * HASH_LENGTH;
+        memcpy(hash_buffer + hash_buffer_offset, cell_hash, HASH_LENGTH);
+        hash_buffer_offset += HASH_LENGTH;
     }
-    
-    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes + cell_index * HASH_SIZE, HASH_SIZE);
-    VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+
+    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes + cell_index * HASH_LENGTH, HASH_LENGTH);
+    VALIDATE(result == HASH_LENGTH, ERR_INVALID_HASH);
 }
 
 void calc_root_cell_hash(Cell_t* cell) {
@@ -125,13 +125,13 @@ void calc_root_cell_hash(Cell_t* cell) {
     hash_buffer_offset += 2;
 
     // append code hash
-    memcpy(hash_buffer + hash_buffer_offset, cc->code_hash, HASH_SIZE);
-    hash_buffer_offset += HASH_SIZE;
+    memcpy(hash_buffer + hash_buffer_offset, cc->code_hash, HASH_LENGTH);
+    hash_buffer_offset += HASH_LENGTH;
 
     // append data hash
-    memcpy(hash_buffer + hash_buffer_offset, bc->hashes + HASH_SIZE, HASH_SIZE);
-    hash_buffer_offset += HASH_SIZE;
+    memcpy(hash_buffer + hash_buffer_offset, bc->hashes + HASH_LENGTH, HASH_LENGTH);
+    hash_buffer_offset += HASH_LENGTH;
 
-    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes, HASH_SIZE);
-    VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes, HASH_LENGTH);
+    VALIDATE(result == HASH_LENGTH, ERR_INVALID_HASH);
 }

@@ -9,7 +9,7 @@ static uint8_t set_result_sign() {
     BEGIN_TRY {
         TRY {
             get_private_key(context->account_number, &privateKey);
-            cx_eddsa_sign(&privateKey, CX_LAST, CX_SHA512, context->to_sign, TO_SIGN_LENGTH, NULL, 0, context->signature, SIGNATURE_LENGTH, NULL);
+            cx_eddsa_sign(&privateKey, CX_LAST, CX_SHA512, context->to_sign, HASH_LENGTH, NULL, 0, context->signature, SIGNATURE_LENGTH, NULL);
         } FINALLY {
             memset(&privateKey, 0, sizeof(privateKey));
         }
@@ -74,15 +74,36 @@ UX_FLOW(ux_sign_flow,
 void handleSign(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
     VALIDATE(p1 == 0 && p2 == 0, ERR_INVALID_REQUEST);
     SignContext_t* context = &data_context.sign_context;
+
     VALIDATE(dataLength == (sizeof(context->account_number) + sizeof(context->amount) + sizeof(context->dst_account_id) + sizeof(context->to_sign)), ERR_INVALID_REQUEST);
 
-    context->account_number = readUint32BE(dataBuffer);
-    context->amount = readUint64BE(dataBuffer + sizeof(context->account_number));
-    memcpy(context->dst_account_id, dataBuffer + sizeof(context->account_number) + sizeof(context->amount), ADDRESS_LENGTH);
-    memcpy(context->to_sign, dataBuffer + sizeof(context->account_number) + sizeof(context->amount) + sizeof(context->dst_account_id), TO_SIGN_LENGTH);
+    int offset = 0;
 
-    print_amount(context->amount, context->amount_str, sizeof(context->amount_str));
-    print_address_short(context->dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
+    context->account_number = readUint32BE(dataBuffer);
+    offset += sizeof(context->account_number);
+
+    uint64_t amount = readUint64BE(dataBuffer + offset);
+    offset += sizeof(amount);
+
+    char asset[ASSET_LENGTH];
+    memcpy(asset, dataBuffer + offset, ASSET_LENGTH);
+    offset += sizeof(asset);
+
+    int8_t decimals = dataBuffer[offset];
+    offset += sizeof(decimals);
+
+    int8_t dst_workchain_id = dataBuffer[offset];
+    offset += sizeof(dst_workchain_id);
+
+    uint8_t dst_account_id[PUBKEY_LENGTH];
+    memcpy(dst_account_id, dataBuffer + offset, PUBKEY_LENGTH);
+    offset += sizeof(dst_account_id);
+
+    memcpy(context->to_sign, dataBuffer + offset, HASH_LENGTH);
+    offset += sizeof(context->to_sign);
+
+    print_token_amount(amount, asset, decimals, context->amount_str, sizeof(context->amount_str));
+    print_address_short(dst_workchain_id, dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
 
     ux_flow_init(0, ux_sign_flow, NULL);
     *flags |= IO_ASYNCH_REPLY;
