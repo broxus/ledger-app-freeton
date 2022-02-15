@@ -75,7 +75,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength
     VALIDATE(p1 == 0 && p2 == 0, ERR_INVALID_REQUEST);
     SignContext_t* context = &data_context.sign_context;
 
-    VALIDATE(dataLength == (sizeof(context->account_number) + sizeof(context->amount) + sizeof(context->dst_account_id) + sizeof(context->to_sign)), ERR_INVALID_REQUEST);
+    VALIDATE(dataLength == (sizeof(context->account_number) + sizeof(uint64_t) + ASSET_LENGTH + sizeof(int8_t) + sizeof(int8_t) + PUBKEY_LENGTH + sizeof(context->to_sign)), ERR_INVALID_REQUEST);
 
     int offset = 0;
 
@@ -100,9 +100,8 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength
     offset += sizeof(dst_account_id);
 
     memcpy(context->to_sign, dataBuffer + offset, HASH_LENGTH);
-    offset += sizeof(context->to_sign);
 
-    print_token_amount(amount, asset, decimals, context->amount_str, sizeof(context->amount_str));
+    print_token_amount(amount, asset, sizeof(asset), decimals, context->amount_str, sizeof(context->amount_str));
     print_address_short(dst_workchain_id, dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
 
     ux_flow_init(0, ux_sign_flow, NULL);

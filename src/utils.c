@@ -179,11 +179,12 @@ void print_address_short(int8_t dst_workchain_id, const uint8_t *in, char *out, 
 }
 
 int print_token_amount(
-        uint64_t amount,
-        const char *asset,
-        uint8_t decimals,
-        char *out,
-        size_t out_length
+    uint64_t amount,
+    const char *asset,
+    size_t asset_length,
+    uint8_t decimals,
+    char *out,
+    size_t out_length
 ) {
     BAIL_IF(out_length > INT_MAX);
     uint64_t dVal = amount;
@@ -220,24 +221,14 @@ int print_token_amount(
     if (out[i-1] == '.') i -= 1;
 
     if (asset) {
-        int asset_length = strlen(asset);
         // Check buffer has space
         BAIL_IF((i + 1 + asset_length + 1) > outlen);
         // Qualify amount
         out[i++] = ' ';
-        strcpy(out + i, asset);
+        strlcpy(out + i, asset, asset_length);
     } else {
         out[i] = '\0';
     }
 
     return 0;
-}
-
-#define EVER_DECIMALS 9
-int print_amount(
-        uint64_t amount,
-        char *out,
-        size_t out_length
-) {
-    return print_token_amount(amount, "EVER", EVER_DECIMALS, out, out_length);
 }
