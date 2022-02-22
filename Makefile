@@ -20,22 +20,27 @@ $(error Environment variable BOLOS_SDK is not set)
 endif
 include $(BOLOS_SDK)/Makefile.defines
 
+APP_LOAD_PARAMS= --curve ed25519 --path "44'/396'" --appFlags 0x240 $(COMMON_LOAD_PARAMS)
+
+# Pending review parameters
+APP_LOAD_PARAMS += --tlvraw 9F:01
+DEFINES += HAVE_PENDING_REVIEW_SCREEN
+
 APPVERSION_M=1
 APPVERSION_N=0
 APPVERSION_P=2
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 APPNAME = "Everscale"
 
-APP_LOAD_PARAMS = --curve ed25519 --path "44'/396'" --appFlags 0x240 $(COMMON_LOAD_PARAMS)
-
-
 DEFINES += $(DEFINES_LIB)
+
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
 	ICONNAME=icons/nanox_app_freeton.gif
 else
 	ICONNAME=icons/nanos_app_everscale.gif
 endif
+
 
 ################
 # Default rule #
@@ -48,23 +53,17 @@ all: default
 
 DEFINES   += OS_IO_SEPROXYHAL
 DEFINES   += HAVE_BAGL HAVE_SPRINTF
-DEFINES   += HAVE_SNPRINTF_FORMAT_U
 DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
 DEFINES   += LEDGER_MAJOR_VERSION=$(APPVERSION_M) LEDGER_MINOR_VERSION=$(APPVERSION_N) LEDGER_PATCH_VERSION=$(APPVERSION_P)
 
-# no assert by default
-DEFINES += NDEBUG
-
 # U2F
 DEFINES   += HAVE_U2F HAVE_IO_U2F
-DEFINES   += U2F_PROXY_MAGIC=\"~EVER\"
+DEFINES   += U2F_PROXY_MAGIC=\"Everscale\"
 DEFINES   += USB_SEGMENT_SIZE=64
 DEFINES   += BLE_SEGMENT_SIZE=32 #max MTU, min 20
 
 #WEBUSB_URL     = www.ledgerwallet.com
 #DEFINES       += HAVE_WEBUSB WEBUSB_URL_SIZE_B=$(shell echo -n $(WEBUSB_URL) | wc -c) WEBUSB_URL=$(shell echo -n $(WEBUSB_URL) | sed -e "s/./\\\'\0\\\',/g")
-
-#DEFINES   += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
 
 DEFINES   += UNUSED\(x\)=\(void\)x
 DEFINES   += APPVERSION=\"$(APPVERSION)\"
@@ -118,8 +117,9 @@ ifeq ($(GCCPATH),)
 $(info GCCPATH is not set: arm-none-eabi-* will be used from PATH)
 endif
 
-CC := $(CLANGPATH)clang
+CC       := $(CLANGPATH)clang
 
+#CFLAGS   += -O0
 CFLAGS   += -O3 -Os
 
 AS     := $(GCCPATH)arm-none-eabi-gcc
@@ -141,18 +141,18 @@ SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 SDK_SOURCE_PATH  += lib_ux
 endif
 
+load: all
+	echo $(APP_LOAD_PARAMS)
+	python3.8 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
+
+delete:
+	python3.8 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
+
 # import generic rules from the sdk
 include $(BOLOS_SDK)/Makefile.rules
 
 #add dependency on custom makefile filename
 dep/%.d: %.c Makefile
-
-load: all
-	echo ${APP_LOAD_PARAMS}
-	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
-
-delete:
-	python3 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
 
 listvariants:
 	@echo VARIANTS COIN Everscale
