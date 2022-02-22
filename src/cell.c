@@ -2,8 +2,6 @@
 #include "utils.h"
 #include "errors.h"
 
-#include <stdio.h>
-
 void Cell_init(struct Cell_t* self, uint8_t* cell_begin) {
     VALIDATE(self && cell_begin, ERR_CELL_IS_EMPTY);
     self->cell_begin = cell_begin;
@@ -71,9 +69,9 @@ void calc_cell_hash(Cell_t* cell, const uint8_t cell_index) {
     uint8_t data_size = Cell_get_data_size(cell);
     BocContext_t* bc = &boc_context;
     if (bc->public_key_cell_index && cell_index == bc->public_key_cell_index) {
-        os_memcpy(hash_buffer + hash_buffer_offset, bc->public_key_cell_data, data_size);
+        memcpy(hash_buffer + hash_buffer_offset, bc->public_key_cell_data, data_size);
     } else {
-        os_memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
+        memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
     }
     hash_buffer_offset += data_size;
 
@@ -87,13 +85,13 @@ void calc_cell_hash(Cell_t* cell, const uint8_t cell_index) {
         uint8_t buf[2];
         buf[0] = 0;
         buf[1] = child_depth;
-        os_memcpy(hash_buffer + hash_buffer_offset, buf, sizeof(buf));
+        memcpy(hash_buffer + hash_buffer_offset, buf, sizeof(buf));
         hash_buffer_offset += sizeof(buf);
     }
     
     for (uint8_t child = 0; child < refs_count; ++child) {
         uint8_t* cell_hash = bc->hashes + refs[child] * HASH_SIZE;
-        os_memcpy(hash_buffer + hash_buffer_offset, cell_hash, HASH_SIZE);
+        memcpy(hash_buffer + hash_buffer_offset, cell_hash, HASH_SIZE);
         hash_buffer_offset += HASH_SIZE;
     }
     
@@ -113,7 +111,7 @@ void calc_root_cell_hash(Cell_t* cell) {
     hash_buffer_offset += 2;
 
     uint8_t data_size = Cell_get_data_size(cell);
-    os_memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
+    memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
     hash_buffer_offset += data_size;
 
     // code hash child depth
@@ -127,11 +125,11 @@ void calc_root_cell_hash(Cell_t* cell) {
     hash_buffer_offset += 2;
 
     // append code hash
-    os_memcpy(hash_buffer + hash_buffer_offset, cc->code_hash, HASH_SIZE);
+    memcpy(hash_buffer + hash_buffer_offset, cc->code_hash, HASH_SIZE);
     hash_buffer_offset += HASH_SIZE;
 
     // append data hash
-    os_memcpy(hash_buffer + hash_buffer_offset, bc->hashes + HASH_SIZE, HASH_SIZE);
+    memcpy(hash_buffer + hash_buffer_offset, bc->hashes + HASH_SIZE, HASH_SIZE);
     hash_buffer_offset += HASH_SIZE;
 
     int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes, HASH_SIZE);

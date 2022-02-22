@@ -27,8 +27,8 @@ DataContext_t data_context;
 ContractContext_t contract_context;
 
 void reset_app_context() {
-    os_memset(&boc_context, 0, sizeof(boc_context));
-    os_memset(&data_context, 0, sizeof(data_context));
+    memset(&boc_context, 0, sizeof(boc_context));
+    memset(&data_context, 0, sizeof(data_context));
 }
 
 void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
@@ -56,11 +56,6 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 
                 case INS_GET_ADDRESS:
                     handleGetAddress(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
-                    break;
-
-                case INS_SIGN_TRANSACTION:
-                    //handleSignTransaction(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
-                    THROW(0x6D00);
                     break;
 
                 default:

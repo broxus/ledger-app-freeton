@@ -14,8 +14,8 @@ elif [[ $1 != "s" ]] && [[ $1 != "x" ]]; then
     exit 1
 fi
 
-if [[ $(dpkg-query -s python3-venv 2>&1) == *'is not installed'* ]]; then
-    printf "\nPackage python3-venv is missing.\nOn Debian-like distros, run:\n\napt install python3-venv\n\n"
+if [[ $(dpkg-query -s python3.8-venv 2>&1) == *'is not installed'* ]]; then
+    printf "\nPackage python3-venv is missing.\nOn Ubuntu distros, run:\n\sudo apt-get install python3.8-venv\n\n"
     exit 1
 fi
 
@@ -53,13 +53,17 @@ if [ ! -d dev-env ]; then
     rm nanox-secure-sdk.tar.gz
     mv nanox-secure-sdk* dev-env/SDK/nanox-secure-sdk
 
-    python3 -m venv venv
+    virtualenv -p python3.8 venv
     source venv/bin/activate
     pip install -r requirements.txt
 fi
 
-
+# Temp decision to avoid rebuild set of compilers
+virtualenv -p python3.8 venv
 source venv/bin/activate
+pip install -r requirements.txt
+
+#source venv/bin/activate
 
 if [[ $1 == "s" ]]; then
     export BOLOS_SDK=$(pwd)/dev-env/SDK/nanos-secure-sdk

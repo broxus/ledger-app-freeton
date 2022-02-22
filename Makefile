@@ -28,9 +28,9 @@ DEFINES += HAVE_PENDING_REVIEW_SCREEN
 
 APPVERSION_M=1
 APPVERSION_N=0
-APPVERSION_P=0
+APPVERSION_P=1
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
-APPNAME = "Free TON"
+APPNAME = "Everscale"
 
 DEFINES += $(DEFINES_LIB)
 
@@ -38,7 +38,7 @@ DEFINES += $(DEFINES_LIB)
 ifeq ($(TARGET_NAME),TARGET_NANOX)
 	ICONNAME=icons/nanox_app_freeton.gif
 else
-	ICONNAME=icons/nanos_app_freeton.gif
+	ICONNAME=icons/nanos_app_everscale.gif
 endif
 
 
@@ -142,10 +142,11 @@ SDK_SOURCE_PATH  += lib_ux
 endif
 
 load: all
-	python -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
+	echo $(APP_LOAD_PARAMS)
+	python3.8 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
 
 delete:
-	python -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
+	python3.8 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
 
 # import generic rules from the sdk
 include $(BOLOS_SDK)/Makefile.rules

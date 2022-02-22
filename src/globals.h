@@ -12,10 +12,13 @@
 
 #define PUBLIC_KEY_LENGTH 32
 #define ADDRESS_LENGTH 32
+#define PUBKEY_STR_SIZE 67
+#define ADDRESS_STR_SIZE 67
+#define AMOUNT_STR_SIZE 27
 #define BIP32_PATH 5
 #define TO_SIGN_LENGTH 32
 #define SIGNATURE_LENGTH 64
-#define MAX_AMOUNT_LENGTH 0x10
+#define MAX_AMOUNT_LENGTH 16
 #define HASH_SIZE 32
 #define BOC_GENERIC_TAG 0xb5ee9c72
 #define MAX_ROOTS_COUNT 1
@@ -45,36 +48,28 @@ typedef struct BocContext_t {
 
 typedef struct AddressContext_t {
     uint8_t address[ADDRESS_LENGTH];
-    char address_str[65];
+    char address_str[ADDRESS_STR_SIZE];
 } AddressContext_t;
 
 typedef struct PublicKeyContext_t {
     uint8_t public_key[PUBLIC_KEY_LENGTH];
-    char public_key_str[65];
+    char public_key_str[PUBKEY_STR_SIZE];
 } PublicKeyContext_t;
 
 typedef struct SignContext_t {
-    uint8_t to_sign[TO_SIGN_LENGTH];
-    uint8_t signature[SIGNATURE_LENGTH];
     uint32_t account_number;
-    char to_sign_str[65];
+    uint64_t amount;
+    uint8_t  dst_account_id[ADDRESS_LENGTH];
+    uint8_t  to_sign[TO_SIGN_LENGTH];
+    uint8_t  signature[SIGNATURE_LENGTH];
+    char     dst_address_str[ADDRESS_LENGTH];
+    char     amount_str[AMOUNT_STR_SIZE];
 } SignContext_t;
-
-typedef struct SignTransactionContext_t {
-    uint8_t to_sign[TO_SIGN_LENGTH];
-    uint8_t signature[SIGNATURE_LENGTH];
-    uint8_t to_sign_buffer[86];
-    char address_str[70];
-    char amount_str[40];
-    uint32_t account_number;
-    uint32_t contract_number;
-} SignTransactionContext_t;
 
 typedef union {
     PublicKeyContext_t pk_context;
     AddressContext_t addr_context;
     SignContext_t sign_context;
-    SignTransactionContext_t sign_tr_context;
 } DataContext_t;
 
 typedef struct ContractContext_t {
