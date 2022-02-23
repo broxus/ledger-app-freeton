@@ -51,8 +51,8 @@ UX_STEP_CB(
     send_response(set_result_sign(), true),
     {
       &C_icon_validate_14,
-      "Finalize",
-      "Transaction",
+      "Accept",
+      "and send",
     });
 UX_STEP_CB(
     ux_sign_flow_5_step,
