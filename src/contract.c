@@ -130,7 +130,7 @@ void compute_address(const uint32_t account_number, uint8_t* address) {
     SliceData_t slice;
     SliceData_init(&slice, data, sizeof(bc->public_key_cell_data));
     SliceData_move_by(&slice, bc->public_key_label_size_bits);
-    SliceData_append(&slice, public_key, PUBLIC_KEY_LENGTH * 8, true);
+    SliceData_append(&slice, public_key, PUBKEY_LENGTH * 8, true);
 
     for (int16_t i = bc->cells_count - 1; i >= 1; --i) {
         Cell_t* cell = &bc->cells[i];
@@ -139,5 +139,5 @@ void compute_address(const uint32_t account_number, uint8_t* address) {
 
     calc_root_cell_hash(&bc->cells[0]);
 
-    memcpy(address, bc->hashes, HASH_SIZE);
+    memcpy(address, bc->hashes, HASH_LENGTH);
 }

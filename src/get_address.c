@@ -7,9 +7,9 @@
 
 static uint8_t set_result_get_address() {
     uint8_t tx = 0;
-    G_io_apdu_buffer[tx++] = ADDRESS_LENGTH;
-    memmove(G_io_apdu_buffer + tx, data_context.addr_context.address, ADDRESS_LENGTH);
-    tx += ADDRESS_LENGTH;
+    G_io_apdu_buffer[tx++] = PUBKEY_LENGTH;
+    memmove(G_io_apdu_buffer + tx, data_context.addr_context.address, PUBKEY_LENGTH);
+    tx += PUBKEY_LENGTH;
     return tx;
 }
 
@@ -22,23 +22,23 @@ UX_STEP_NOCB(
       "address",
     });
 UX_STEP_NOCB(
-    ux_display_address_flow_2_step, 
-    bnnn_paging, 
+    ux_display_address_flow_2_step,
+    bnnn_paging,
     {
       .title = "Address",
       .text = data_context.addr_context.address_str,
     });
 UX_STEP_CB(
-    ux_display_address_flow_3_step, 
-    pb, 
+    ux_display_address_flow_3_step,
+    pb,
     send_response(0, false),
     {
       &C_icon_crossmark,
       "Reject",
     });
 UX_STEP_CB(
-    ux_display_address_flow_4_step, 
-    pb, 
+    ux_display_address_flow_4_step,
+    pb,
     send_response(set_result_get_address(), true),
     {
       &C_icon_validate_14,
@@ -63,7 +63,7 @@ void handleGetAddress(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t data
     if (p1 == P1_NON_CONFIRM) {
         *tx = set_result_get_address();
         THROW(SUCCESS);
-    } 
+    }
     if (p1 == P1_CONFIRM) {
         AddressContext_t* context = &data_context.addr_context;
         print_address(context->address, context->address_str, sizeof(context->address));

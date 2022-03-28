@@ -5,7 +5,8 @@
 
 #include <stdlib.h>
 
-#define AMOUNT_MAX_SIZE 21
+// max amount is max uint64 scaled down: "18446744073.709551615"
+#define AMOUNT_MAX_SIZE 22
 
 static const char hexAlphabet[] = "0123456789ABCDEF";
 
@@ -107,78 +108,6 @@ uint8_t leading_zeros(uint16_t value) {
     return lz;
 }
 
-#define SCRATCH_SIZE 37
-uint8_t convert_hex_amount_to_displayable(uint8_t* amount, uint8_t amount_length, char* out) {
-    uint8_t LOOP1 = 28;
-    uint8_t LOOP2 = 9;
-    uint16_t scratch[SCRATCH_SIZE];
-    uint8_t offset = 0;
-    uint8_t nonZero = 0;
-    uint8_t i;
-    uint8_t targetOffset = 0;
-    uint8_t workOffset;
-    uint8_t j;
-    uint8_t nscratch = SCRATCH_SIZE;
-    uint8_t smin = nscratch - 2;
-    uint8_t comma = 0;
-
-    for (i = 0; i < SCRATCH_SIZE; i++) {
-        scratch[i] = 0;
-    }
-    for (i = 0; i < amount_length; i++) {
-        for (j = 0; j < 8; j++) {
-            uint8_t k;
-            uint16_t shifted_in =
-                (((amount[i] & 0xff) & ((1 << (7 - j)))) != 0) ? (short)1
-                                                               : (short)0;
-            for (k = smin; k < nscratch; k++) {
-                scratch[k] += ((scratch[k] >= 5) ? 3 : 0);
-            }
-            if (scratch[smin] >= 8) {
-                smin -= 1;
-            }
-            for (k = smin; k < nscratch - 1; k++) {
-                scratch[k] =
-                    ((scratch[k] << 1) & 0xF) | ((scratch[k + 1] >= 8) ? 1 : 0);
-            }
-            scratch[nscratch - 1] = ((scratch[nscratch - 1] << 1) & 0x0F) |
-                                    (shifted_in == 1 ? 1 : 0);
-        }
-    }
-
-    for (i = 0; i < LOOP1; i++) {
-        if (!nonZero && (scratch[offset] == 0)) {
-            offset++;
-        } else {
-            nonZero = 1;
-            out[targetOffset++] = scratch[offset++] + '0';
-        }
-    }
-    if (targetOffset == 0) {
-        out[targetOffset++] = '0';
-    }
-    workOffset = offset;
-    for (i = 0; i < LOOP2; i++) {
-        unsigned char allZero = 1;
-        unsigned char j;
-        for (j = i; j < LOOP2; j++) {
-            if (scratch[workOffset + j] != 0) {
-                allZero = 0;
-                break;
-            }
-        }
-        if (allZero) {
-            break;
-        }
-        if (!comma) {
-            out[targetOffset++] = '.';
-            comma = 1;
-        }
-        out[targetOffset++] = scratch[offset++] + '0';
-    }
-    return targetOffset;
-}
-
 void print_public_key(const uint8_t *in, char *out, uint8_t len) {
     out[0] = '0';
     out[1] = 'x';
@@ -201,11 +130,42 @@ void print_address(const uint8_t *in, char *out, uint8_t len) {
     out[j] = '\0';
 }
 
-void print_address_short(const uint8_t *in, char *out, uint8_t len) {
-    out[0] = '0';
-    out[1] = ':';
+void print_address_short(int8_t dst_workchain_id, const uint8_t *in, char *out, uint8_t len) {
+    uint8_t offset = 0;
+
+    uint8_t workchain_id = (uint8_t) dst_workchain_id;
+    if (dst_workchain_id < 0) {
+        out[offset++] = '-';
+        workchain_id = (workchain_id ^ 0xffffffffffffffff) + 1;
+    }
+
+    {
+        uint8_t i = offset;
+        uint8_t j = offset;
+
+        uint8_t dVal = workchain_id;
+        do {
+            if (dVal > 0) {
+                out[i] = (dVal % 10) + '0';
+                dVal /= 10;
+            } else {
+                out[i] = '0';
+            }
+            i++;
+            offset++;
+        } while (dVal > 0);
+
+        out[i--] = ':';
+
+        for (; j < i; j++, i--) {
+            int tmp = out[j];
+            out[j] = out[i];
+            out[i] = tmp;
+        }
+    }
+
     uint8_t i, j;
-    for (i = 0, j = 2; i < 3; i += 1, j += 2) {
+    for (i = 0, j = offset + 1; i < 3; i += 1, j += 2) {
         out[j] = hexAlphabet[in[i] / 16];
         out[j + 1] = hexAlphabet[in[i] % 16];
     }
@@ -218,47 +178,57 @@ void print_address_short(const uint8_t *in, char *out, uint8_t len) {
     out[j] = '\0';
 }
 
-int print_amount(uint64_t amount, char *out, size_t out_len) {
-    char buffer[AMOUNT_MAX_SIZE] = {0};
+int print_token_amount(
+    uint64_t amount,
+    const char *asset,
+    size_t asset_length,
+    uint8_t decimals,
+    char *out,
+    size_t out_length
+) {
+    BAIL_IF(out_length > INT_MAX);
     uint64_t dVal = amount;
-    int i;
+    int outlen  = (int)out_length;
+    int i = 0;
+    int min_chars = decimals + 1;
 
-    for (i = 0; dVal > 0 || i < 11; i++) {
-        if (dVal > 0) {
-            buffer[i] = (dVal % 10) + '0';
+    if (i < (outlen - 1)) {
+        do {
+            if (i == decimals) {
+                out[i] = '.';
+                i += 1;
+            }
+            out[i] = (dVal % 10) + '0';
             dVal /= 10;
-        } else {
-            buffer[i] = '0';
-        }
-        if (i == 8) {
             i += 1;
-            buffer[i] = '.';
-        }
-        if (i >= AMOUNT_MAX_SIZE) {
-            return -1;
-        }
+        } while ((dVal > 0 || i < min_chars) && i < outlen);
     }
-
-    // reverse order
-    for (int j = 0; j < i / 2; j++) {
-        char c = buffer[j];
-        buffer[j] = buffer[i - j - 1];
-        buffer[i - j - 1] = c;
+    BAIL_IF(i >= outlen);
+    // Reverse order
+    int j, k;
+    for (j = 0, k = i - 1; j < k; j++, k--) {
+        char tmp = out[j];
+        out[j] = out[k];
+        out[k] = tmp;
     }
-
-    // strip trailing 0s
-    i -= 1;
-    while (buffer[i] == '0') {
-        buffer[i] = 0;
-        i -= 1;
+    // Strip trailing 0s
+    for (i -= 1; i > 0; i--) {
+        if (out[i] != '0') break;
     }
-    // strip trailing .
-    if (buffer[i] == '.') buffer[i] = 0;
-    strlcpy(out, buffer, out_len);
+    i += 1;
 
-    strlcpy(buffer, "TON", AMOUNT_MAX_SIZE);
-    strlcat(out, " ", out_len);
-    strlcat(out, buffer, out_len);
+    // Strip trailing .
+    if (out[i-1] == '.') i -= 1;
+
+    if (asset) {
+        // Check buffer has space
+        BAIL_IF((i + 1 + asset_length + 1) > outlen);
+        // Qualify amount
+        out[i++] = ' ';
+        strlcpy(out + i, asset, asset_length);
+    } else {
+        out[i] = '\0';
+    }
 
     return 0;
 }

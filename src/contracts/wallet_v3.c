@@ -12,7 +12,7 @@ const uint8_t wallet_v3_code_hash[] = { 0x84, 0xDA, 0xFA, 0x44, 0x9F, 0x98, 0xA6
 const uint8_t wallet_v3_id[] = { 0x4B, 0xA9, 0x2D, 0x8A };
 
 void compute_address_wallet_v3(const uint32_t account_number, uint8_t* address) {
-    uint8_t data_hash[HASH_SIZE];
+    uint8_t data_hash[HASH_LENGTH];
 
     // compute data hash
     {
@@ -34,14 +34,14 @@ void compute_address_wallet_v3(const uint32_t account_number, uint8_t* address) 
         memcpy(hash_buffer + hash_buffer_offset, wallet_v3_id, sizeof(wallet_v3_id));
         hash_buffer_offset += sizeof(wallet_v3_id);
 
-        uint8_t public_key[PUBLIC_KEY_LENGTH];
+        uint8_t public_key[PUBKEY_LENGTH];
         get_public_key(account_number, public_key);
 
-        memcpy(hash_buffer + hash_buffer_offset, public_key, PUBLIC_KEY_LENGTH);
-        hash_buffer_offset += PUBLIC_KEY_LENGTH;
+        memcpy(hash_buffer + hash_buffer_offset, public_key, PUBKEY_LENGTH);
+        hash_buffer_offset += PUBKEY_LENGTH;
 
-        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, data_hash, HASH_SIZE);
-        VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, data_hash, HASH_LENGTH);
+        VALIDATE(result == HASH_LENGTH, ERR_INVALID_HASH);
     }
 
     // compute address
@@ -63,14 +63,14 @@ void compute_address_wallet_v3(const uint32_t account_number, uint8_t* address) 
         hash_buffer_offset += 4;
 
         // append code hash
-        memcpy(hash_buffer + hash_buffer_offset, wallet_v3_code_hash, HASH_SIZE);
-        hash_buffer_offset += HASH_SIZE;
+        memcpy(hash_buffer + hash_buffer_offset, wallet_v3_code_hash, HASH_LENGTH);
+        hash_buffer_offset += HASH_LENGTH;
 
         // append code hash
-        memcpy(hash_buffer + hash_buffer_offset, data_hash, HASH_SIZE);
-        hash_buffer_offset += HASH_SIZE;
+        memcpy(hash_buffer + hash_buffer_offset, data_hash, HASH_LENGTH);
+        hash_buffer_offset += HASH_LENGTH;
 
-        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, address, HASH_SIZE);
-        VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, address, HASH_LENGTH);
+        VALIDATE(result == HASH_LENGTH, ERR_INVALID_HASH);
     }
 }
