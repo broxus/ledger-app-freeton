@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import string
 import sys
 import json
 import argparse
@@ -66,8 +67,8 @@ class Ledger:
         address = '{}:{}'.format(self.workchain, response[1:].hex())
         return address
 
-    def sign(self, amount: bytes, account_id: bytes, to_sign: bytes) -> str:
-        payload = self.account + amount + account_id + to_sign
+    def sign(self, amount: bytes, asset: bytes, decimal: bytes, workchain_id: bytes, account_id: bytes, to_sign: bytes) -> str:
+        payload = self.account + amount + asset + decimal + workchain_id + account_id + to_sign
         sw, response = self.transport.exchange(cla=CLA, ins=INS_SIGN, cdata=payload)
         if sw != SUCCESS:
             raise WalletException('sign error: {:X}'.format(sw))
@@ -91,12 +92,15 @@ class Wallet:
 
     def sign(self, amount: int, dest: str, to_sign_b64: str):
         amount = amount.to_bytes(8, byteorder='big')
-        _, account_id = dest.split(":")
+        workchain_id, account_id = dest.split(":")
 
         to_sign = base64.b64decode(to_sign_b64)
         logger.info('Please confirm signature on device: {}'.format(to_sign.hex()))
 
-        signature = self.ledger.sign(amount, bytes.fromhex(account_id), to_sign)
+        decimal = 9
+        asset = str.encode("EVER")
+
+        signature = self.ledger.sign(amount, asset, decimal.to_bytes(1, byteorder='big', signed=True), int(workchain_id).to_bytes(1, byteorder='big', signed=True), bytes.fromhex(account_id), to_sign)
         return signature
 
     def prepare_call(self, public_key: str, address: str, function_name: str, inputs: dict, deploy_set=None):
