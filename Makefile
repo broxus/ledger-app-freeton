@@ -36,7 +36,7 @@ DEFINES += $(DEFINES_LIB)
 
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-	ICONNAME=icons/nanos_app_freeton.gif
+	ICONNAME=icons/nanos_app_everscale.gif
 else
 	ICONNAME=icons/nanox_app_everscale.gif
 endif
@@ -144,7 +144,6 @@ SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 endif
 
 load: all
-	echo $(APP_LOAD_PARAMS)
 	python3.8 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
 
 delete:
