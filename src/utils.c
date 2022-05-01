@@ -191,9 +191,8 @@ int print_token_amount(uint128_t *amount, uint32_t base_param, const char *asset
     uint32_t offset = 0;
     uint32_t min_chars = decimals + 1;
 
-    if ((base_param < 2) || (base_param > 16)) {
-        return false;
-    }
+    BAIL_IF((base_param < 2) || (base_param > 16));
+
     do {
         BAIL_IF(offset > (out_length - 1));
 
@@ -229,5 +228,5 @@ int print_token_amount(uint128_t *amount, uint32_t base_param, const char *asset
         out[offset] = '\0';
     }
 
-    return true;
+    return 0;
 }

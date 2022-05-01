@@ -101,7 +101,9 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength
 
     memcpy(context->to_sign, dataBuffer + offset, HASH_LENGTH);
 
-    print_token_amount(&amount, 10, asset, decimals, context->amount_str, sizeof(context->amount_str));
+    int res = print_token_amount(&amount, 10, asset, decimals, context->amount_str, sizeof(context->amount_str));
+    VALIDATE(res == 0, ERR_INVALID_REQUEST);
+
     print_address_short(dst_workchain_id, dst_account_id, context->dst_address_str, sizeof(context->dst_address_str));
 
     ux_flow_init(0, ux_sign_flow, NULL);
