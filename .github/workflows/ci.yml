@@ -10,36 +10,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  nanos-build:
+  nano-build:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
+    strategy:
+      matrix:
+        sdk:
+        - path: $NANOS_SDK
+          name: nanos
+        - path: $NANOX_SDK
+          name: nanox
+        - path: $NANOSP_SDK
+          name: nanosp
     steps:
       - uses: actions/checkout@v2
-      - name: Build app
+      - name: Build application for SDK ${{ matrix.sdk.name }}
         run: |
           make clean
-          make
+          make BOLOS_SDK=${{ matrix.sdk.path }}
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
-          name: app-nanos
-          path: bin
-
-  nanox-build:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build app
-        run: |
-          make clean
-          make BOLOS_SDK=$NANOX_SDK
-      - name: Upload app binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: app-nanox
+          name: app
           path: bin
 
   scan-build:
