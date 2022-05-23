@@ -4,6 +4,7 @@
 #include "os.h"
 #include "cx.h"
 #include "globals.h"
+#include "uint128.h"
 
 #include <limits.h>
 #include <stdint.h>
@@ -16,8 +17,14 @@ uint64_t readUint64BE(uint8_t *buffer);
 void get_public_key(uint32_t accountNumber, uint8_t* publicKeyArray);
 void get_private_key(uint32_t accountNumber, cx_ecfp_private_key_t *privateKey);
 
-int  print_amount(uint64_t amount, char *out, size_t out_length);
-int  print_token_amount(uint64_t amount, const char *asset, size_t asset_length, uint8_t decimals, char *out, size_t out_length);
+int print_token_amount(
+        uint128_t *amount,
+        uint32_t base,
+        const char *asset,
+        uint8_t decimals,
+        char *out,
+        size_t out_length
+);
 
 void print_public_key(const uint8_t *in, char *out, uint8_t len);
 

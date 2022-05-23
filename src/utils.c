@@ -1,6 +1,7 @@
 #include "os.h"
 #include "cx.h"
 #include "menu.h"
+#include "uint128.h"
 #include "utils.h"
 
 #include <stdlib.h>
@@ -178,56 +179,53 @@ void print_address_short(int8_t dst_workchain_id, const uint8_t *in, char *out, 
     out[j] = '\0';
 }
 
-int print_token_amount(
-    uint64_t amount,
-    const char *asset,
-    size_t asset_length,
-    uint8_t decimals,
-    char *out,
-    size_t out_length
-) {
-    BAIL_IF(out_length > INT_MAX);
-    uint64_t dVal = amount;
-    int outlen  = (int)out_length;
-    int i = 0;
-    int min_chars = decimals + 1;
+int print_token_amount(uint128_t *amount, uint32_t base_param, const char *asset, uint8_t decimals, char *out, uint32_t out_length) {
+    uint128_t rDiv;
+    uint128_t rMod;
+    uint128_t base;
+    copy128(&rDiv, amount);
+    clear128(&rMod);
+    clear128(&base);
+    LOWER(base) = base_param;
 
-    if (i < (outlen - 1)) {
-        do {
-            if (i == decimals) {
-                out[i] = '.';
-                i += 1;
-            }
-            out[i] = (dVal % 10) + '0';
-            dVal /= 10;
-            i += 1;
-        } while ((dVal > 0 || i < min_chars) && i < outlen);
-    }
-    BAIL_IF(i >= outlen);
-    // Reverse order
-    int j, k;
-    for (j = 0, k = i - 1; j < k; j++, k--) {
-        char tmp = out[j];
-        out[j] = out[k];
-        out[k] = tmp;
-    }
+    uint32_t offset = 0;
+    uint32_t min_chars = decimals + 1;
+
+    BAIL_IF((base_param < 2) || (base_param > 16));
+
+    do {
+        BAIL_IF(offset > (out_length - 1));
+
+        if (offset == decimals) {
+            out[offset++] = '.';
+        }
+
+        divmod128(&rDiv, &base, &rDiv, &rMod);
+        out[offset++] = hexAlphabet[(uint8_t) LOWER(rMod)];
+    } while (!zero128(&rDiv) || offset < min_chars);
+
+    BAIL_IF(offset >= out_length);
+
+    reverseString(out, offset);
+
     // Strip trailing 0s
-    for (i -= 1; i > 0; i--) {
-        if (out[i] != '0') break;
+    for (offset -= 1; offset > 0; offset--) {
+        if (out[offset] != '0') break;
     }
-    i += 1;
+    offset += 1;
 
     // Strip trailing .
-    if (out[i-1] == '.') i -= 1;
+    if (out[offset-1] == '.') offset -= 1;
 
     if (asset) {
+        const int asset_length = strlen(asset);
         // Check buffer has space
-        BAIL_IF((i + 1 + asset_length + 1) > outlen);
+        BAIL_IF((offset + 1 + asset_length + 1) > out_length);
         // Qualify amount
-        out[i++] = ' ';
-        strlcpy(out + i, asset, asset_length);
+        out[offset++] = ' ';
+        strncpy(out + offset, asset, asset_length + 1);
     } else {
-        out[i] = '\0';
+        out[offset] = '\0';
     }
 
     return 0;
