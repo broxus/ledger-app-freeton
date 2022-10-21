@@ -94,6 +94,13 @@ unsigned int ui_prepro(const bagl_element_t *element) {
     return display;
 }
 
+void writeUint32BE(uint32_t val, uint8_t *bytes) {
+    bytes[0] = (val >> 24) & 0xFF;
+    bytes[1] = (val >> 16) & 0xFF;
+    bytes[2] = (val >> 8) & 0xFF;
+    bytes[3] = val & 0xFF;
+}
+
 uint16_t readUint16BE(uint8_t *buffer) {
     return (buffer[0] << 8) | (buffer[1]);
 }

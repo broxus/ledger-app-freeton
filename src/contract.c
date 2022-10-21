@@ -47,13 +47,13 @@ const uint8_t bridge_multisig_wallet[] = { 0xB5, 0xEE, 0x9C, 0x72, 0x01, 0x02, 0
                                            0x20 };
 
 const uint8_t safe_multisig_2_wallet[] = { 0xB5, 0xEE, 0x9C, 0x72, 0x01, 0x02, 0x56, 0x01,
-                                          0x00, 0x0F, 0xDD, 0x00, 0x02, 0x01, 0x34, 0x03,
-                                          0x01, 0x01, 0x01, 0xC0, 0x02, 0x00, 0x43, 0xD0,
-                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                          0x20 };
+                                           0x00, 0x0F, 0xDD, 0x00, 0x02, 0x01, 0x34, 0x03,
+                                           0x01, 0x01, 0x01, 0xC0, 0x02, 0x00, 0x43, 0xD0,
+                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x20 };
 
 const uint8_t surf_wallet[] = { 0xB5, 0xEE, 0x9C, 0x72, 0x01, 0x02, 0x4D, 0x01,
                                 0x00, 0x12, 0xB4, 0x00, 0x02, 0x01, 0x34, 0x03,
@@ -64,6 +64,11 @@ const uint8_t surf_wallet[] = { 0xB5, 0xEE, 0x9C, 0x72, 0x01, 0x02, 0x4D, 0x01,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x20 };
 // Wallets code hash
+const uint8_t wallet_v3_code_hash[] = { 0x84, 0xDA, 0xFA, 0x44, 0x9F, 0x98, 0xA6, 0x98,
+                                        0x77, 0x89, 0xBA, 0x23, 0x23, 0x58, 0x07, 0x2B,
+                                        0xC0, 0xF7, 0x6D, 0xC4, 0x52, 0x40, 0x02, 0xA5,
+                                        0xD0, 0x91, 0x8B, 0x9A, 0x75, 0xD2, 0xD5, 0x99 };
+
 const uint8_t safe_multisig_wallet_code_hash[] = { 0x80, 0xd6, 0xc4, 0x7c, 0x4a, 0x25, 0x54, 0x3c,
                                                    0x9b, 0x39, 0x7b, 0x71, 0x71, 0x6f, 0x3f, 0xae,
                                                    0x1e, 0x2c, 0x5d, 0x24, 0x71, 0x74, 0xc5, 0x2e,
@@ -175,10 +180,64 @@ void find_public_key_cell() {
 }
 
 void compute_wallet_v3_address(uint32_t account_number, uint8_t* address) {
-    UNUSED(account_number);
-    UNUSED(address);
+    uint8_t data_hash[HASH_SIZE];
 
-    // TODO
+    // Compute data hash
+    {
+        uint8_t hash_buffer[42]; // d1(1) + d2(1) + data(8) + pubkey(32)
+
+        uint16_t hash_buffer_offset = 0;
+
+        // D1/D2
+        hash_buffer[0] = 0x00; // d1(1)
+        hash_buffer[1] = 0x50; // d2(1)
+        hash_buffer_offset += 2;
+
+        // Data
+        writeUint32BE(0, hash_buffer + hash_buffer_offset);
+        hash_buffer_offset += 4;
+
+        writeUint32BE(WALLET_ID, hash_buffer + hash_buffer_offset);
+        hash_buffer_offset += 4;
+
+        // Pubkey
+        uint8_t public_key[PUBLIC_KEY_LENGTH];
+        get_public_key(account_number, public_key);
+
+        memcpy(hash_buffer + hash_buffer_offset, public_key, PUBLIC_KEY_LENGTH);
+        hash_buffer_offset += PUBLIC_KEY_LENGTH;
+
+        // Calculate data hash
+        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, data_hash, HASH_SIZE);
+        VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+    }
+
+    // Compute address
+    {
+        uint8_t hash_buffer[71]; // d1(1) + d2(1) + data(5) + code_hash(32) + data_hash(32)
+
+        uint16_t hash_buffer_offset = 0;
+        hash_buffer[0] = 0x02; // d1(1)
+        hash_buffer[1] = 0x01; // d2(1)
+        hash_buffer_offset += 2;
+
+        hash_buffer[2] = 0x34; // data
+        hash_buffer_offset += 1;
+
+        writeUint32BE(0x00, hash_buffer + hash_buffer_offset);
+        hash_buffer_offset += 4;
+
+        // append code hash
+        memcpy(hash_buffer + hash_buffer_offset, wallet_v3_code_hash, sizeof(wallet_v3_code_hash));
+        hash_buffer_offset += sizeof(wallet_v3_code_hash);
+
+        // append code hash
+        memcpy(hash_buffer + hash_buffer_offset, data_hash, sizeof(data_hash));
+        hash_buffer_offset += sizeof(data_hash);
+
+        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, address, HASH_SIZE);
+        VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+    }
 }
 
 void compute_multisig_address(uint32_t account_number, const uint8_t* wallet, uint16_t wallet_size, const uint8_t* code_hash, uint32_t cell_depth, uint8_t* address) {
