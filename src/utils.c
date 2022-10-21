@@ -101,6 +101,17 @@ void writeUint32BE(uint32_t val, uint8_t *bytes) {
     bytes[3] = val & 0xFF;
 }
 
+void writeUint64BE(uint64_t val, uint8_t *bytes) {
+    bytes[0] = (val >> 56) & 0xFF;
+    bytes[1] = (val >> 48) & 0xFF;
+    bytes[2] = (val >> 40) & 0xFF;
+    bytes[3] = (val >> 32) & 0xFF;
+    bytes[4] = (val >> 24) & 0xFF;
+    bytes[5] = (val >> 16) & 0xFF;
+    bytes[6] = (val >> 8) & 0xFF;
+    bytes[7] = val & 0xFF;
+}
+
 uint16_t readUint16BE(uint8_t *buffer) {
     return (buffer[0] << 8) | (buffer[1]);
 }

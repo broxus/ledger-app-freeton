@@ -69,6 +69,11 @@ const uint8_t wallet_v3_code_hash[] = { 0x84, 0xDA, 0xFA, 0x44, 0x9F, 0x98, 0xA6
                                         0xC0, 0xF7, 0x6D, 0xC4, 0x52, 0x40, 0x02, 0xA5,
                                         0xD0, 0x91, 0x8B, 0x9A, 0x75, 0xD2, 0xD5, 0x99 };
 
+const uint8_t ever_wallet_code_hash[] = { 0x3B, 0xA6, 0x52, 0x8A, 0xB2, 0x69, 0x4C, 0x11,
+                                          0x81, 0x80, 0xAA, 0x3B, 0xD1, 0x0D, 0xD1, 0x9F,
+                                          0xF4, 0x00, 0xB9, 0x09, 0xAB, 0x4D, 0xCF, 0x58,
+                                          0xFC, 0x69, 0x92, 0x5B, 0x2C, 0x7B, 0x12, 0xA6 };
+
 const uint8_t safe_multisig_wallet_code_hash[] = { 0x80, 0xd6, 0xc4, 0x7c, 0x4a, 0x25, 0x54, 0x3c,
                                                    0x9b, 0x39, 0x7b, 0x71, 0x71, 0x6f, 0x3f, 0xae,
                                                    0x1e, 0x2c, 0x5d, 0x24, 0x71, 0x74, 0xc5, 0x2e,
@@ -188,17 +193,13 @@ void compute_wallet_v3_address(uint32_t account_number, uint8_t* address) {
 
         uint16_t hash_buffer_offset = 0;
 
-        // D1/D2
         hash_buffer[0] = 0x00; // d1(1)
         hash_buffer[1] = 0x50; // d2(1)
         hash_buffer_offset += 2;
 
         // Data
-        writeUint32BE(0, hash_buffer + hash_buffer_offset);
-        hash_buffer_offset += 4;
-
-        writeUint32BE(WALLET_ID, hash_buffer + hash_buffer_offset);
-        hash_buffer_offset += 4;
+        writeUint64BE(WALLET_ID, hash_buffer + hash_buffer_offset);
+        hash_buffer_offset += sizeof(uint64_t);
 
         // Pubkey
         uint8_t public_key[PUBLIC_KEY_LENGTH];
@@ -221,17 +222,76 @@ void compute_wallet_v3_address(uint32_t account_number, uint8_t* address) {
         hash_buffer[1] = 0x01; // d2(1)
         hash_buffer_offset += 2;
 
-        hash_buffer[2] = 0x34; // data
+        // Data
+        hash_buffer[2] = 0x34;
         hash_buffer_offset += 1;
 
         writeUint32BE(0x00, hash_buffer + hash_buffer_offset);
         hash_buffer_offset += 4;
 
-        // append code hash
+        // Code hash
         memcpy(hash_buffer + hash_buffer_offset, wallet_v3_code_hash, sizeof(wallet_v3_code_hash));
         hash_buffer_offset += sizeof(wallet_v3_code_hash);
 
-        // append code hash
+        // Data hash
+        memcpy(hash_buffer + hash_buffer_offset, data_hash, sizeof(data_hash));
+        hash_buffer_offset += sizeof(data_hash);
+
+        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, address, HASH_SIZE);
+        VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+    }
+}
+
+void compute_ever_wallet_address(uint32_t account_number, uint8_t* address) {
+    uint8_t data_hash[HASH_SIZE];
+
+    // Compute data hash
+    {
+        uint8_t hash_buffer[42]; // d1(1) + d2(1) + pubkey(32) + data(8)
+
+        uint16_t hash_buffer_offset = 0;
+
+        hash_buffer[0] = 0x00; // d1(1)
+        hash_buffer[1] = 0x50; // d2(1)
+        hash_buffer_offset += 2;
+
+        // Pubkey
+        uint8_t public_key[PUBLIC_KEY_LENGTH];
+        get_public_key(account_number, public_key);
+
+        memcpy(hash_buffer + hash_buffer_offset, public_key, PUBLIC_KEY_LENGTH);
+        hash_buffer_offset += PUBLIC_KEY_LENGTH;
+
+        // Data
+        writeUint64BE(0, hash_buffer + hash_buffer_offset);
+        hash_buffer_offset += sizeof(uint64_t);
+
+        // Calculate data hash
+        int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, data_hash, HASH_SIZE);
+        VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
+    }
+
+    // Compute address
+    {
+        uint8_t hash_buffer[71]; // d1(1) + d2(1) + data(5) + code_hash(32) + data_hash(32)
+
+        uint16_t hash_buffer_offset = 0;
+        hash_buffer[0] = 0x02; // d1(1)
+        hash_buffer[1] = 0x01; // d2(1)
+        hash_buffer_offset += 2;
+
+        // Data
+        hash_buffer[2] = 0x34;
+        hash_buffer_offset += 1;
+
+        writeUint32BE(0x30000, hash_buffer + hash_buffer_offset);
+        hash_buffer_offset += sizeof(uint32_t);
+
+        // Code hash
+        memcpy(hash_buffer + hash_buffer_offset, ever_wallet_code_hash, sizeof(ever_wallet_code_hash));
+        hash_buffer_offset += sizeof(ever_wallet_code_hash);
+
+        // Data hash
         memcpy(hash_buffer + hash_buffer_offset, data_hash, sizeof(data_hash));
         hash_buffer_offset += sizeof(data_hash);
 
@@ -284,6 +344,10 @@ void get_address(const uint32_t account_number, uint32_t wallet_type, uint8_t* a
     switch (wallet_type) {
         case WALLET_V3: {
             compute_wallet_v3_address(account_number, address);
+            break;
+        }
+        case EVER_WALLET: {
+            compute_ever_wallet_address(account_number, address);
             break;
         }
         case SAFE_MULTISIG_WALLET: {

@@ -261,6 +261,10 @@ void prepare_to_sign(struct ByteStream_t* src, uint32_t wallet_type) {
 
             break;
         }
+        case EVER_WALLET: {
+            // TODO
+            break;
+        }
         case SAFE_MULTISIG_WALLET:
         case SAFE_MULTISIG_WALLET_24H:
         case SETCODE_MULTISIG_WALLET:

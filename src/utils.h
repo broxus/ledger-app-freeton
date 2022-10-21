@@ -14,6 +14,8 @@ void get_private_key(uint32_t accountNumber, cx_ecfp_private_key_t *privateKey);
 void send_response(uint8_t tx, bool approve);
 
 void writeUint32BE(uint32_t val, uint8_t *bytes);
+void writeUint64BE(uint64_t val, uint8_t *bytes);
+
 uint16_t readUint16BE(uint8_t *buffer);
 uint32_t readUint32BE(uint8_t *buffer);
 uint64_t readUint64BE(uint8_t *buffer);

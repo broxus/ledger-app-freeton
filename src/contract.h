@@ -8,12 +8,13 @@
 
 enum {
     WALLET_V3                   = 0,
-    SAFE_MULTISIG_WALLET        = 1,
-    SAFE_MULTISIG_WALLET_24H    = 2,
-    SETCODE_MULTISIG_WALLET     = 3,
-    BRIDGE_MULTISIG_WALLET      = 4,
-    SURF_WALLET                 = 5,
-    MULTISIG_2                  = 6,
+    EVER_WALLET                 = 1,
+    SAFE_MULTISIG_WALLET        = 2,
+    SAFE_MULTISIG_WALLET_24H    = 3,
+    SETCODE_MULTISIG_WALLET     = 4,
+    BRIDGE_MULTISIG_WALLET      = 5,
+    SURF_WALLET                 = 6,
+    MULTISIG_2                  = 7,
 };
 
 enum {
