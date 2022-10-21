@@ -1,6 +1,5 @@
 #include "cell.h"
 #include "utils.h"
-#include "errors.h"
 
 void Cell_init(struct Cell_t* self, uint8_t* cell_begin) {
     VALIDATE(self && cell_begin, ERR_CELL_IS_EMPTY);
@@ -36,20 +35,19 @@ uint8_t* Cell_get_refs(const struct Cell_t* self, uint8_t* refs_count) {
 
 uint16_t deserialize_cell(struct Cell_t* cell, const uint8_t cell_index, const uint8_t cells_count) {
     uint8_t d1 = Cell_get_d1(cell);
-    uint8_t l = d1 >> 5; // level
-    uint8_t h = (d1 & 16) == 16; // with hashes
-    uint8_t s = (d1 & 8) == 8; // exotic
-    uint8_t r = d1 & 7;	// refs count
-    uint8_t absent = r == 7 && h;
-    UNUSED(l);
-    UNUSED(absent);
+    uint8_t level = d1 >> 5; // level
+    uint8_t hashes = (d1 & 16) == 16; // with hashes
+    uint8_t exotic = (d1 & 8) == 8; // exotic
+    uint8_t refs_count = d1 & 7;	// refs count
+    uint8_t absent = refs_count == 7 && hashes;
+    UNUSED(level);
 
-    VALIDATE(!h, ERR_INVALID_DATA);
-    VALIDATE(!s, ERR_INVALID_DATA); // only ordinary cells are valid
-    VALIDATE(r <= MAX_REFERENCES_COUNT, ERR_INVALID_DATA);
+    VALIDATE(!hashes, ERR_INVALID_DATA);
+    VALIDATE(!exotic, ERR_INVALID_DATA); // only ordinary cells are valid
+    VALIDATE(refs_count <= MAX_REFERENCES_COUNT, ERR_INVALID_DATA);
+    VALIDATE(!absent, ERR_INVALID_DATA);
 
     uint8_t data_size = Cell_get_data_size(cell);
-    uint8_t refs_count = 0;
     uint8_t* refs = Cell_get_refs(cell, &refs_count);
     for (uint8_t i = 0; i < refs_count; ++i) {
         uint8_t ref = refs[i];
@@ -90,48 +88,11 @@ void calc_cell_hash(Cell_t* cell, const uint8_t cell_index) {
     }
 
     for (uint8_t child = 0; child < refs_count; ++child) {
-        uint8_t* cell_hash = bc->hashes + refs[child] * HASH_LENGTH;
-        memcpy(hash_buffer + hash_buffer_offset, cell_hash, HASH_LENGTH);
-        hash_buffer_offset += HASH_LENGTH;
+        uint8_t* cell_hash = bc->hashes + refs[child] * HASH_SIZE;
+        memcpy(hash_buffer + hash_buffer_offset, cell_hash, HASH_SIZE);
+        hash_buffer_offset += HASH_SIZE;
     }
 
-    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes + cell_index * HASH_LENGTH, HASH_LENGTH);
-    VALIDATE(result == HASH_LENGTH, ERR_INVALID_HASH);
-}
-
-void calc_root_cell_hash(Cell_t* cell) {
-    BocContext_t* bc = &boc_context;
-    ContractContext_t* cc = &contract_context;
-
-    uint8_t hash_buffer[262]; // d1(1) + d2(1) + data(128) + 4 * (depth(1) + hash(32))
-
-    uint16_t hash_buffer_offset = 0;
-    hash_buffer[0] = Cell_get_d1(cell);
-    hash_buffer[1] = Cell_get_d2(cell);
-    hash_buffer_offset += 2;
-
-    uint8_t data_size = Cell_get_data_size(cell);
-    memcpy(hash_buffer + hash_buffer_offset, Cell_get_data(cell), data_size);
-    hash_buffer_offset += data_size;
-
-    // code hash child depth
-    hash_buffer[hash_buffer_offset] = 0x00;
-    hash_buffer[hash_buffer_offset + 1] = cc->wallet_code_child_depth;
-    hash_buffer_offset += 2;
-
-    // data hash child depth
-    hash_buffer[hash_buffer_offset] = 0x00;
-    hash_buffer[hash_buffer_offset + 1] = cc->wallet_data_child_depth;
-    hash_buffer_offset += 2;
-
-    // append code hash
-    memcpy(hash_buffer + hash_buffer_offset, cc->code_hash, HASH_LENGTH);
-    hash_buffer_offset += HASH_LENGTH;
-
-    // append data hash
-    memcpy(hash_buffer + hash_buffer_offset, bc->hashes + HASH_LENGTH, HASH_LENGTH);
-    hash_buffer_offset += HASH_LENGTH;
-
-    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes, HASH_LENGTH);
-    VALIDATE(result == HASH_LENGTH, ERR_INVALID_HASH);
+    int result = cx_hash_sha256(hash_buffer, hash_buffer_offset, bc->hashes + cell_index * HASH_SIZE, HASH_SIZE);
+    VALIDATE(result == HASH_SIZE, ERR_INVALID_HASH);
 }

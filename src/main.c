@@ -24,8 +24,6 @@ unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 BocContext_t boc_context;
 DataContext_t data_context;
 
-ContractContext_t contract_context;
-
 void reset_app_context() {
     memset(&boc_context, 0, sizeof(boc_context));
     memset(&data_context, 0, sizeof(data_context));
@@ -56,6 +54,10 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 
                 case INS_GET_ADDRESS:
                     handleGetAddress(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
+                    break;
+
+                case INS_SIGN_TRANSACTION:
+                    handleSignTransaction(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
                     break;
 
                 default:
@@ -168,6 +170,8 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 }
 
 unsigned char io_event(unsigned char channel) {
+    UNUSED(channel);
+
     // nothing done with the event, throw an error on the transport layer if
     // needed
 
@@ -197,7 +201,7 @@ unsigned char io_event(unsigned char channel) {
         case SEPROXYHAL_TAG_TICKER_EVENT:
             UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer,
             {
-#if !defined(TARGET_NANOX) && !defined(TARGET_NANOS2)
+#ifndef TARGET_NANOX
                 if (UX_ALLOWED) {
                     if (ux_step_count) {
                     // prepare next screen

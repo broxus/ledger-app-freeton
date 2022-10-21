@@ -7,23 +7,28 @@
 #include <stdbool.h>
 
 enum {
-    SAFE_MULTISIG_WALLET = 0,
-    SAFE_MULTISIG_24H_WALLET,
-    SETCODE_MULTISIG_WALLET,
-    SURF_WALLET,
-    WALLET_V3,
+    WALLET_V3                   = 0,
+    SAFE_MULTISIG_WALLET        = 1,
+    SAFE_MULTISIG_WALLET_24H    = 2,
+    SETCODE_MULTISIG_WALLET     = 3,
+    BRIDGE_MULTISIG_WALLET      = 4,
+    SURF_WALLET                 = 5,
+    MULTISIG_2                  = 6,
+};
+
+enum {
+    MULTISIG_SEND_TRANSACTION   = 1290691692,
+    MULTISIG_SUBMIT_TRANSACTION = 320701133,
+};
+
+enum {
+    NORMAL_FLAG = 3,
+    ALL_BALANCE_FLAG = 128,
+    ALL_BALANCE_AND_DELETE_FLAG = 160
 };
 
 struct ByteStream_t;
 void deserialize_cells_tree(struct ByteStream_t* src);
-void compute_address(const uint32_t account_number, uint8_t* address);
-void get_address(const uint32_t account_number, const uint32_t contract_number, uint8_t* address);
-
-void safe_multisig_init();
-void safe_multisig_24h_init();
-void setcode_multisig_init();
-void surf_init();
-
-void compute_address_wallet_v3(const uint32_t account_number, uint8_t* address);
+void get_address(const uint32_t account_number, uint32_t wallet_type, uint8_t* address);
 
 #endif

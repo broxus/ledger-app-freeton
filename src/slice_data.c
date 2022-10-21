@@ -196,6 +196,6 @@ void SliceData_append(struct SliceData_t* self, uint8_t* in, uint16_t bits, bool
             }
         }
     }
-    
+
     self->data_window_start += bits;
 }
