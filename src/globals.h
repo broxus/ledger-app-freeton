@@ -64,6 +64,7 @@ typedef struct SignTransactionContext_t {
     char address_str[70];
     char amount_str[40];
     uint32_t account_number;
+    uint32_t wallet_type;
     char to_sign_str[65];
 } SignTransactionContext_t;
 

@@ -93,8 +93,8 @@ void handleSignTransaction(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t
     context->account_number = readUint32BE(dataBuffer + offset);
     offset += sizeof(context->account_number);
 
-    uint32_t wallet_type = readUint32BE(dataBuffer + offset);
-    offset += sizeof(wallet_type);
+    context->wallet_type = readUint32BE(dataBuffer + offset);
+    offset += sizeof(context->wallet_type);
 
     uint8_t* msg_begin = dataBuffer + offset;
     uint8_t msg_length = dataLength - offset;
@@ -102,7 +102,7 @@ void handleSignTransaction(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t
     ByteStream_t src;
     ByteStream_init(&src, msg_begin, msg_length);
 
-    prepare_to_sign(&src, wallet_type);
+    prepare_to_sign(&src);
 
     // TODO: remove later
     snprintf(context->to_sign_str, sizeof(context->to_sign_str), "%.*H", sizeof(context->to_sign), context->to_sign);

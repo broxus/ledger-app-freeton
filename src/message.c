@@ -135,8 +135,22 @@ void deserialize_message(struct SliceData_t* slice, uint8_t flags) {
     deserialize_message_header(slice, flags);
 }
 
-void deserialize_multisig_params(struct SliceData_t* slice, uint32_t function_id) {
+void deserialize_multisig_params(struct SliceData_t* slice, uint32_t function_id, uint8_t* address) {
     switch (function_id) {
+        case MULTISIG_DEPLOY_TRANSACTION: {
+            DataContext_t * dc = &data_context;
+
+            // Address to deploy
+            set_dst_address(DEFAULT_WORKCHAIN, address);
+
+            // Attached amount
+            uint8_t amount[sizeof(uint32_t)];
+            writeUint32BE(DEFAULT_ATTACHED_AMOUNT, amount);
+
+            set_amount(amount, sizeof(amount), NORMAL_FLAG);
+
+            break;
+        }
         case MULTISIG_SEND_TRANSACTION: {
             // Recipient address
             int8_t dst_wc;
@@ -236,16 +250,68 @@ uint32_t deserialize_contract_header(struct SliceData_t* slice) {
     return function_id;
 }
 
-void prepare_to_sign(struct ByteStream_t* src, uint32_t wallet_type) {
-    deserialize_cells_tree(src);
+void prepend_address_to_cell(uint8_t* cell_buffer, uint16_t cell_buffer_size, struct Cell_t* cell, uint8_t* address) {
+    uint16_t bit_len = Cell_bit_len(cell);
+    bit_len += 267; // Prefix(2) + Anycast(1) + WorkchainId(8) + Address(32 * 8)
+
+    uint8_t d1 = Cell_get_d1(cell);
+    uint8_t d2 = ((bit_len >> 2) & 0b11111110) | (bit_len % 8 != 0);
+
+    cell_buffer[0] = d1;
+    cell_buffer[1] = d2;
+
+    SliceData_t slice;
+    SliceData_init(&slice, cell_buffer + CELL_DATA_OFFSET, cell_buffer_size);
+
+    // Append prefix
+    uint8_t prefix[] = { 0x80 }; // $100 prefix AddrStd
+    SliceData_append(&slice, prefix, 3, false);
+
+    // Append workchain
+    uint8_t wc[] = { 0x00 };
+    SliceData_append(&slice, wc, 8, false);
+
+    // Append address
+    SliceData_append(&slice, address, ADDRESS_LENGTH * 8, false);
+
+    // Append cell data
+    uint8_t* data = Cell_get_data(cell);
+    uint8_t data_size = Cell_get_data_size(cell);
+    SliceData_append(&slice, data, data_size * 8, false);
+
+    // Append references
+    uint8_t refs_count = 0;
+    uint8_t* refs = Cell_get_refs(cell, &refs_count);
+
+    VALIDATE(refs_count >= 0 && refs_count <= MAX_REFERENCES_COUNT, ERR_INVALID_DATA);
+    for (uint8_t child = 0; child < refs_count; ++child) {
+        uint8_t cell_data_size = (d2 >> 1) + (((d2 & 1) != 0) ? 1 : 0);
+        cell_buffer[CELL_DATA_OFFSET + cell_data_size + child] = refs[child];
+    }
+
+    // Replace cell
+    cell->cell_begin = cell_buffer;
+}
+
+void prepare_to_sign(struct ByteStream_t* src) {
+    // Init context
     BocContext_t* bc = &boc_context;
+    DataContext_t * dc = &data_context;
+
+    // Get address
+    uint8_t address[ADDRESS_LENGTH];
+    get_address(dc->sign_tr_context.account_number, dc->sign_tr_context.wallet_type, address);
+    memset(bc, 0, sizeof(boc_context));
+
+    // Parse transaction boc
+    deserialize_cells_tree(src);
 
     Cell_t* root_cell = &bc->cells[ROOT_CELL_INDEX];
 
     SliceData_t root_slice;
     SliceData_from_cell(&root_slice, root_cell);
 
-    switch (wallet_type) {
+    switch (dc->sign_tr_context.wallet_type) {
         case WALLET_V3: {
             uint8_t flags = deserialize_wallet_v3(&root_slice);
 
@@ -277,16 +343,32 @@ void prepare_to_sign(struct ByteStream_t* src, uint32_t wallet_type) {
             SliceData_t gift_slice;
             SliceData_from_cell(&gift_slice, gift_cell);
 
-            deserialize_multisig_params(&gift_slice, function_id);
+            deserialize_multisig_params(&gift_slice, function_id, address);
 
             // Calculate payload hash to sign
             prepare_payload_hash(bc);
 
             break;
         }
-        case MULTISIG_2:
-            // TODO
+        case MULTISIG_2: {
+            uint32_t function_id = deserialize_contract_header(&root_slice);
+
+            Cell_t* gift_cell = &bc->cells[GIFT_CELL_INDEX];
+
+            SliceData_t gift_slice;
+            SliceData_from_cell(&gift_slice, gift_cell);
+
+            deserialize_multisig_params(&gift_slice, function_id, address);
+
+            // Prepend address to root cell
+            uint8_t cell_buffer[130]; // d1(1) + d2(1) + data(128)
+            prepend_address_to_cell(cell_buffer, sizeof(cell_buffer), root_cell, address);
+
+            // Calculate payload hash to sign
+            prepare_payload_hash(bc);
+
             break;
+        }
         default:
             THROW(ERR_INVALID_WALLET_TYPE);
     }

@@ -33,6 +33,32 @@ uint8_t* Cell_get_refs(const struct Cell_t* self, uint8_t* refs_count) {
     return self->cell_begin + CELL_DATA_OFFSET + data_size;
 }
 
+uint16_t Cell_bit_len(struct Cell_t* self) {
+    uint8_t data_size = Cell_get_data_size(self);
+
+    uint16_t bit_len = data_size * 8;
+    if ((Cell_get_d1(self) & 0b1) == 0) {
+        return bit_len;
+    }
+
+    uint8_t* data = Cell_get_data(self);
+    for (uint8_t i = data_size - 1; i >= 0; --i) {
+        if (data[i] == 0) {
+            bit_len -= 8;
+        } else {
+            uint8_t skip = 1;
+            uint8_t mask = 1;
+            while ((data[i] & mask) == 0) {
+                skip += 1;
+                mask <<= 1;
+            }
+            bit_len -= skip;
+            break;
+        }
+    }
+    return bit_len;
+}
+
 uint16_t deserialize_cell(struct Cell_t* cell, const uint8_t cell_index, const uint8_t cells_count) {
     uint8_t d1 = Cell_get_d1(cell);
     uint8_t level = d1 >> 5; // level
